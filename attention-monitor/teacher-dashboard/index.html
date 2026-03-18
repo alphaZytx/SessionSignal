@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassPulse - Teacher Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    
+    <!-- Dependencies -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+</head>
+<body class="dashboard-body">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="top-nav">
+        <div class="nav-left">
+            <svg class="brain-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"></path>
+                <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"></path>
+                <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"></path>
+                <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"></path>
+                <path d="M6.002 6.502L6 6.5"></path>
+                <path d="M11.88 20a4 4 0 0 1-1.38-1.5"></path>
+            </svg>
+            <span class="app-name">ClassPulse</span>
+        </div>
+        
+        <div class="nav-center">
+            <span class="session-display" id="navSessionCode">Session: ------</span>
+        </div>
+        
+        <div class="nav-right">
+            <div class="status-group">
+                <div class="conn-dot" id="socketStatusDot"></div>
+                <span>Status</span>
+            </div>
+            <div class="status-group ml-3">
+                <span id="navStudentCount">0 online</span>
+            </div>
+            <div class="timer-display ml-3" id="sessionTimer">00:00:00</div>
+            
+            <button class="btn btn-danger hidden ml-3" id="btnEndSession">End Session</button>
+            <button class="btn" id="btnDemoMode" style="background-color: var(--bg-surface-hover); color: var(--color-teal); border: 1px solid var(--border-color); margin-left:12px;">Demo Mode</button>
+            <button class="btn btn-primary ml-2" id="btnStartSession">Start Session</button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-layout">
+        
+        <!-- LEFT SIDEBAR: Students -->
+        <aside class="sidebar-left">
+            <div class="sidebar-header">
+                <h2>Students</h2>
+            </div>
+            <div class="student-list" id="studentListContainer">
+                <div class="empty-state">No students joined yet.</div>
+                <!-- Student cards will be injected here -->
+            </div>
+        </aside>
+
+        <!-- CENTER MAIN AREA: Charts & Stats -->
+        <main class="center-content">
+            
+            <!-- ROW 1: Overview Cards -->
+            <div class="overview-row">
+                <div class="stat-card">
+                    <h3 class="stat-title">Class Attention</h3>
+                    <div class="stat-value large-value color-green" id="avgAttScore">--</div>
+                    <div class="stat-sub">Average Score</div>
+                </div>
+                <div class="stat-card">
+                    <h3 class="stat-title">Students Focused</h3>
+                    <div class="stat-value" id="focusedCountText">0/0</div>
+                    <div class="stat-sub">Currently Focused</div>
+                </div>
+                <div class="stat-card">
+                    <h3 class="stat-title">Dominant Emotion</h3>
+                    <div class="stat-value emoji-large" id="dominantEmo">😐</div>
+                    <div class="stat-sub" id="dominantEmoLabel">Neutral</div>
+                </div>
+                <div class="stat-card">
+                    <h3 class="stat-title">Active Alerts</h3>
+                    <div class="stat-value color-amber" id="activeAlertsCount">0</div>
+                    <div class="stat-sub">Requires attention</div>
+                </div>
+            </div>
+
+            <!-- ROW 2: Primary Charts -->
+            <div class="charts-row split-50">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Attention Timeline</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="attentionTimeline"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Emotion Distribution</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="emotionDistribution"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: Secondary Charts -->
+            <div class="charts-row split-25">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Gaze on Screen %</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="gazeChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Blink Rate (per min)</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="blinkRateChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Head Pose Distribution</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="headPoseChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Drowsiness Timeline</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="drowsinessTimeline"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 4: Detailed Data Table -->
+            <div class="chart-card list-card">
+                <div class="chart-header">
+                    <h3>Detailed Data Feed</h3>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="detailsTable">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Attention</th>
+                                <th>Gaze %</th>
+                                <th>Emotion</th>
+                                <th>Drowsiness</th>
+                                <th>Blink/min</th>
+                                <th>Head Pose</th>
+                                <th>Yawns</th>
+                                <th>Alerts</th>
+                                <th>Last Update</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- RIGHT SIDEBAR: Alerts & Tips -->
+        <aside class="sidebar-right">
+            <div class="sidebar-header">
+                <h2>Live Alerts</h2>
+            </div>
+            
+            <div class="alerts-feed" id="alertsContainer">
+                <!-- Alerts injected here -->
+                <div class="empty-state">No active alerts.</div>
+            </div>
+
+            <div class="sidebar-header reco-header">
+                <h2>Recommendations</h2>
+            </div>
+            
+            <div class="recommendations-panel" id="recoContainer">
+                <div class="tip-card">
+                    Start a session to receive real-time teaching recommendations based on class engagement.
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Modals / Overlays (if needed later) -->
+    
+    <!-- Scripts (Will implement logic in part 6) -->
+    <script src="js/dashboard.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-Session Analytics - ClassPulse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+</head>
+<body class="dashboard-body analytics-body" style="overflow-y: auto;">
+
+    <!-- HEADER -->
+    <header class="top-nav print-hide">
+        <div class="nav-left">
+            <button class="btn btn-danger" onclick="window.location.href='index.html'" style="border:none; color:var(--text-secondary);">&larr; Dashboard</button>
+            <span class="app-name ml-2">Session Analytics</span>
+        </div>
+        
+        <div class="nav-center">
+            <span class="session-display" id="headerDetail">Loading Session Data...</span>
+        </div>
+        
+        <div class="nav-right">
+            <button class="btn btn-primary" id="btnExportPdf">Export PDF</button>
+        </div>
+    </header>
+
+    <div class="analytics-container padding-24">
+        
+        <!-- SECTION 1: Session Overview -->
+        <section class="mb-4">
+            <h2 class="section-title">Session Overview</h2>
+            <div class="overview-row" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 20px;">
+                <div class="stat-card">
+                    <div class="stat-sub">Session Duration</div>
+                    <div class="stat-value" id="valDuration">--:--:--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-sub">Average Class Attention</div>
+                    <div class="stat-value large-value" id="valAvgAtt">--%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-sub">Total Students</div>
+                    <div class="stat-value" id="valTotalStudents">--</div>
+                </div>
+            </div>
+            <div class="overview-row" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-sub">Total Alert Events</div>
+                    <div class="stat-value color-amber" id="valTotalAlerts">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-sub">Most Engaged Student</div>
+                    <div class="stat-value color-green" id="valMostEngaged" style="font-size:1.5rem;">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-sub">Least Engaged Student</div>
+                    <div class="stat-value color-red" id="valLeastEngaged" style="font-size:1.5rem;">--</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Attention Heatmap -->
+        <section class="mb-4 chart-card">
+            <div class="chart-header">
+                <h3>Class Attention Heatmap (5-sec intervals)</h3>
+            </div>
+            <div class="chart-body heatmap-container" id="attentionHeatmap" style="padding: 20px; height: auto; min-height: 200px; overflow-x: auto;">
+                <!-- Generated via JS -->
+                <div style="text-align: center; color: var(--text-secondary);">Building Heatmap...</div>
+            </div>
+            <div id="attentionHeatmapLegend" style="padding: 0 20px 16px 20px;">
+                <!-- Generated via JS (exact spec colors/labels) -->
+            </div>
+            <!-- Custom Heatmap Tooltip -->
+            <div id="heatmapTooltip" class="heatmap-tooltip"></div>
+        </section>
+
+        <!-- SECTION 4: Comparative Analysis -->
+        <section class="mb-4">
+            <h2 class="section-title">Comparative Class Analysis</h2>
+            <div class="charts-row split-50" style="margin-bottom: 20px;">
+                <div class="chart-card" style="height: 350px;">
+                    <div class="chart-header"><h3>Metrics Comparison (Bar)</h3></div>
+                    <div class="chart-body" style="height: calc(100% - 53px);"><canvas id="comparativeChart"></canvas></div>
+                </div>
+                <div class="chart-card" style="height: 350px;">
+                    <div class="chart-header"><h3>Gaze vs Attention (Scatter)</h3></div>
+                    <div class="chart-body" style="height: calc(100% - 53px);"><canvas id="compScatterChart"></canvas></div>
+                </div>
+            </div>
+            <div class="chart-card" style="height: 350px;">
+                <div class="chart-header"><h3>Full Session Timeline (All Students)</h3></div>
+                <div class="chart-body" style="height: calc(100% - 53px);"><canvas id="compTimelineChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Per-Student Deep Dive -->
+        <section class="mb-4 print-break-before">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 class="section-title" style="margin: 0;">Per-Student Deep Dive</h2>
+                <button class="btn btn-danger print-hide" id="btnExportCsv" style="border:1px solid var(--border-color); background:var(--bg-surface);">Export Selected CSV</button>
+            </div>
+            
+            <div class="tabs-container print-hide" id="studentTabs">
+                <!-- Generated via JS -->
+            </div>
+
+            <div class="tab-content" id="studentTabContent" style="display: none;">
+                
+                <h3 id="printStudentName" class="print-only" style="margin-bottom: 20px; border-bottom: 2px solid var(--color-blue); padding-bottom: 8px;"></h3>
+
+                <!-- ROW A -->
+                <div class="overview-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 20px;">
+                    <div class="stat-card" style="padding:10px;"><div class="stat-sub">Score</div><div class="stat-value" id="sdScore" style="font-size:1.5rem">0</div></div>
+                    <div class="stat-card" style="padding:10px;"><div class="stat-sub">Focus Time</div><div class="stat-value color-green" id="sdFocusTime" style="font-size:1.5rem">0m</div></div>
+                    <div class="stat-card" style="padding:10px;"><div class="stat-sub">Distracted Time</div><div class="stat-value color-red" id="sdDistTime" style="font-size:1.5rem">0m</div></div>
+                    <div class="stat-card" style="padding:10px;"><div class="stat-sub">Longest Streak</div><div class="stat-value color-blue" id="sdStreak" style="font-size:1.5rem">0m</div></div>
+                    <div class="stat-card" style="padding:10px;"><div class="stat-sub">Total Yawns</div><div class="stat-value color-amber" id="sdYawns" style="font-size:1.5rem">0</div></div>
+                </div>
+
+                <!-- ROW B -->
+                <div class="charts-row split-50" style="margin-bottom: 20px;">
+                    <div class="chart-card"><div class="chart-header"><h3>Attention Timeline</h3></div><div class="chart-body"><canvas id="studentAttentionFull"></canvas></div></div>
+                    <div class="chart-card"><div class="chart-header"><h3>Emotion Distribution</h3></div><div class="chart-body"><canvas id="studentEmotionDonut"></canvas></div></div>
+                </div>
+
+                <!-- ROW C -->
+                <div class="charts-row split-50" style="margin-bottom: 20px;">
+                    <div class="chart-card"><div class="chart-header"><h3>Gaze on Screen %</h3></div><div class="chart-body"><canvas id="studentGazeFull"></canvas></div></div>
+                    <div class="chart-card"><div class="chart-header"><h3>Head Pose Breakdown</h3></div><div class="chart-body"><canvas id="studentHeadPose"></canvas></div></div>
+                </div>
+
+                <!-- ROW D -->
+                <div class="charts-row split-50" style="margin-bottom: 20px;">
+                    <div class="chart-card"><div class="chart-header"><h3>Blink Rate Timeline</h3></div><div class="chart-body"><canvas id="studentBlinkTimeline"></canvas></div></div>
+                    <div class="chart-card"><div class="chart-header"><h3>Drowsiness Score (Inverted)</h3></div><div class="chart-body"><canvas id="studentDrowsinessFull"></canvas></div></div>
+                </div>
+
+                <!-- ROW E -->
+                <div class="chart-card list-card mb-4 print-hide" style="max-height: 400px; overflow-y: auto;">
+                    <div class="chart-header"><h3>Full Snapshot Table</h3></div>
+                    <div class="table-container">
+                        <table class="data-table" id="sdTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th><th>Att.</th><th>Emotion</th><th>Gaze%</th><th>Head Pose</th><th>Blinks</th><th>Drowsy</th><th>Eye%</th><th>Alerts</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ROW F -->
+                <div class="chart-card" style="padding: 20px;">
+                    <h3 style="margin-bottom: 12px; color:var(--text-primary);">AI Insights</h3>
+                    <ul class="insights-list" id="sdInsights" style="color:var(--text-secondary); line-height:1.6; padding-left:20px;">
+                        <!-- Injected -->
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 5: Session Recommendations Report -->
+        <section class="chart-card print-break-before" style="padding: 24px; margin-bottom: 40px;">
+            <h2 class="section-title" style="margin-bottom: 16px; color:var(--text-primary); border-bottom:1px solid var(--border-color); padding-bottom:8px;">Session AI Report</h2>
+            <div id="aiReportBox" style="color:var(--text-secondary); line-height: 1.6; font-size:15px;">
+                Loading report...
+            </div>
+        </section>
+
+    </div>
+
+    <script src="js/analytics.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/student.css">
+    
+    <!-- Socket.io -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
+    <!-- MediaPipe and Chart.js CDNs -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Error/Offline Overlay -->
+    <div id="errorOverlay" class="hidden" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,15,15,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
+        <h2 id="errorTitle" style="color:var(--color-red, #ef4444); margin-bottom:10px;">Connection Error</h2>
+        <p id="errorMessage" style="color:var(--text-secondary, #9ca3af); margin-bottom:20px; max-width:400px;">We lost connection to the server.</p>
+        <button id="btnErrorAction" style="padding:10px 20px; background:var(--color-blue, #3b82f6); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Try Again</button>
+    </div>
+
+    <div class="monitor-layout">
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <div class="left-section">
+            <span class="label">Student:</span>
+            <span id="topStudentName" class="value fw-600">Loading...</span>
+        </div>
+        <div class="center-section">
+            <span class="label">Session Code:</span>
+            <span id="topSessionCode" class="value code-display">------</span>
+        </div>
+        <div class="right-section">
+            <span class="status-indicator" id="connectionStatus">
+                <span class="dot offline" id="connDot"></span> <span id="connText">Disconnected</span>
+            </span>
+            <button id="btnStudentEndSession" style="margin-left:16px; padding:6px 14px; background:#ef4444; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; transition: background 0.2s;">Leave Session</button>
+        </div>
+    </header>
+
+    <!-- Main Content Split -->
+    <main class="main-split">
+        <!-- Left Column -->
+        <div class="left-col">
+            <div class="video-container" id="videoBox">
+                <video id="videoElement" width="320" height="240" autoplay playsinline></video>
+                <canvas id="overlayCanvas" width="320" height="240"></canvas>
+                <div id="loadingOverlay" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:20;">
+                    <div style="border:4px solid #333; border-top:4px solid var(--accent); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div>
+                    <p style="margin-top:10px; color:#fff; font-size:14px;" id="loadingMsg">Loading AI Models...</p>
+                </div>
+            </div>
+            
+            <div class="status-panel">
+                <h3>Live Detection Status</h3>
+                <div class="status-row">
+                    <span>Face Detected</span>
+                    <span id="badgeFace" class="badge red">NO</span>
+                </div>
+                <div class="status-row">
+                    <span>Gaze on Screen</span>
+                    <span id="badgeGaze" class="badge red">NO</span>
+                </div>
+                <div class="status-row">
+                    <span>Current Emotion</span>
+                    <span id="labelEmotion" class="text-val">--</span>
+                </div>
+                <div class="status-row center-ring">
+                    <div class="progress-ring">
+                        <svg class="ring" width="80" height="80">
+                            <circle class="ring-bg" cx="40" cy="40" r="34"></circle>
+                            <circle class="ring-fill" id="attentionRing" cx="40" cy="40" r="34"></circle>
+                        </svg>
+                        <div class="ring-text" id="attentionRingText">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-col">
+            <div class="metrics-grid">
+                <!-- Card 1 -->
+                <div class="metric-card">
+                    <div class="card-title">Attention Score</div>
+                    <div class="card-val huge-num" id="cardAttention">0</div>
+                </div>
+                <!-- Card 2 -->
+                <div class="metric-card">
+                    <div class="card-title">Engagement Level</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="barEngagement" style="width: 0%"></div>
+                    </div>
+                    <div class="card-val-small" id="valEngagement">0%</div>
+                </div>
+                <!-- Card 3 -->
+                <div class="metric-card">
+                    <div class="card-title">Current Emotion</div>
+                    <div class="card-val emoji-val" id="cardEmotion">😐 Neutral</div>
+                </div>
+                <!-- Card 4 -->
+                <div class="metric-card">
+                    <div class="card-title">Gaze Status</div>
+                    <div class="card-val icon-val" id="cardGaze">👀 Looking Away</div>
+                </div>
+                <!-- Card 5 -->
+                <div class="metric-card">
+                    <div class="card-title">Blink Rate</div>
+                    <div class="card-val" id="cardBlinks">0 <span class="unit">/min</span></div>
+                </div>
+                <!-- Card 6 -->
+                <div class="metric-card">
+                    <div class="card-title">Eye Openness</div>
+                    <div class="card-val" id="cardEyeOpen">0%</div>
+                </div>
+                <!-- Card 7 -->
+                <div class="metric-card">
+                    <div class="card-title">Head Pose (P/Y/R)</div>
+                    <div class="card-val small-val" id="cardPose">0 / 0 / 0</div>
+                </div>
+                <!-- Card 8 -->
+                <div class="metric-card">
+                    <div class="card-title">Focus Streak</div>
+                    <div class="card-val" id="cardStreak">0 <span class="unit">sec</span></div>
+                </div>
+            </div>
+
+            <!-- Sparkline Chart -->
+            <div class="chart-container">
+                <div class="card-title">Attention Over Time</div>
+                <div class="canvas-wrapper">
+                    <canvas id="sparklineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Bar -->
+    <footer class="bottom-bar">
+        <div class="transmit-info">
+            <span class="pulse-dot" id="transmitPulse"></span>
+            <span id="transmitText">Data transmitted 0 times</span>
+        </div>
+        <div class="timestamp-info">
+            Last transmission: <span id="lastTxTime">--:--:--</span>
+        </div>
+    </footer>
+    </div>
+    
+    <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+
+    <script type="module">
+        import { FaceAnalyzer, buildPayload } from './js/faceAnalyzer.js';
+        import { DataCollector } from './js/dataCollector.js';
+        import { SocketClient } from './js/socketClient.js';
+
+        // Read DOM elements
+        const topStudentName = document.getElementById('topStudentName');
+        const topSessionCode = document.getElementById('topSessionCode');
+        const connDot = document.getElementById('connDot');
+        const connText = document.getElementById('connText');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMsg = document.getElementById('loadingMsg');
+        const errorOverlay = document.getElementById('errorOverlay');
+        
+        const badgeFace = document.getElementById('badgeFace');
+        const badgeGaze = document.getElementById('badgeGaze');
+        const labelEmotion = document.getElementById('labelEmotion');
+        const attentionRing = document.getElementById('attentionRing');
+        const attentionRingText = document.getElementById('attentionRingText');
+        
+        const cardAttention = document.getElementById('cardAttention');
+        const barEngagement = document.getElementById('barEngagement');
+        const valEngagement = document.getElementById('valEngagement');
+        const cardEmotion = document.getElementById('cardEmotion');
+        const cardGaze = document.getElementById('cardGaze');
+        const cardBlinks = document.getElementById('cardBlinks');
+        const cardEyeOpen = document.getElementById('cardEyeOpen');
+        const cardPose = document.getElementById('cardPose');
+        const cardStreak = document.getElementById('cardStreak');
+        
+        const transmitPulse = document.getElementById('transmitPulse');
+        const transmitText = document.getElementById('transmitText');
+        const lastTxTime = document.getElementById('lastTxTime');
+
+        // Chart setup
+        const ctx = document.getElementById('sparklineChart').getContext('2d');
+        const sparklineConfig = {
+            type: 'line',
+            data: {
+                labels: Array(60).fill(''),
+                datasets: [{
+                    label: 'Attention',
+                    data: Array(60).fill(null),
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: {
+                    x: { display: false },
+                    y: { min: 0, max: 100, display: false }
+                },
+                animation: { duration: 0 }
+            }
+        };
+        const sparklineChart = new Chart(ctx, sparklineConfig);
+
+        function updateSparkline(val) {
+            const dataArr = sparklineChart.data.datasets[0].data;
+            dataArr.shift();
+            dataArr.push(val);
+            sparklineChart.update();
+        }
+
+        async function init() {
+            // Read from storage
+            const studentName = localStorage.getItem('studentName');
+            const sessionId = localStorage.getItem('sessionId');
+            
+            if (!studentName || !sessionId) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            topStudentName.textContent = studentName;
+            topSessionCode.textContent = sessionId;
+
+            // 1. Init Socket
+            const socketClient = new SocketClient('http://localhost:3000');
+            
+            let hasJoinedSession = false;
+            
+            socketClient.onConnectHook = () => {
+                connDot.className = 'dot online';
+                connText.textContent = 'Connected';
+                
+                // Hide the error overlay on successful connection
+                errorOverlay.classList.add('hidden');
+                
+                socketClient.joinSession(studentName, sessionId)
+                    .then(() => {
+                        hasJoinedSession = true;
+                    })
+                    .catch(err => {
+                        // Don't block the UI with an overlay for session join errors
+                        // The camera and monitoring should keep running
+                        console.warn('Session join error:', err.message);
+                        connText.textContent = 'Session: ' + err.message;
+                        connDot.className = 'dot offline';
+                        connDot.style.backgroundColor = 'orange';
+                        
+                        // If it's an invalid session, clear storage and redirect after brief delay
+                        if (err.message.includes('Invalid session')) {
+                            setTimeout(() => {
+                                alert("Invalid or expired session. Please join again.");
+                                localStorage.removeItem('studentName');
+                                localStorage.removeItem('sessionId');
+                                window.location.href = 'index.html';
+                            }, 1500);
+                        }
+                    });
+            };
+            
+            socketClient.onDisconnectHook = () => {
+                connDot.className = 'dot offline';
+                connText.textContent = 'Disconnected';
+                
+                // Only show the full-screen overlay for actual server disconnections
+                // (not for session join issues — the camera should keep running)
+                if (hasJoinedSession) {
+                    document.getElementById('errorTitle').textContent = 'Connection Lost';
+                    document.getElementById('errorMessage').textContent = 'We lost connection to the server. Reconnecting automatically...';
+                    errorOverlay.classList.remove('hidden');
+                    errorOverlay.style.display = 'flex';
+                }
+            };
+            
+            socketClient.onReconnectAttemptHook = () => {
+                connDot.className = 'dot offline';
+                connDot.style.backgroundColor = 'orange';
+                connText.textContent = 'Reconnecting...';
+            };
+            
+            socketClient.onTransmitHook = (info) => {
+                transmitText.textContent = `Data transmitted ${info.count} times`;
+                lastTxTime.textContent = info.time.toLocaleTimeString();
+                
+                // Pulse animation
+                transmitPulse.classList.remove('active');
+                void transmitPulse.offsetWidth; // trigger reflow
+                transmitPulse.classList.add('active');
+            };
+
+            socketClient.onSessionEndedHook = (data) => {
+                alert(data.message || 'The session has been ended by the teacher.');
+                if (faceAnalyzer) faceAnalyzer.stop();
+                socketClient.disconnect();
+                localStorage.removeItem('studentName');
+                localStorage.removeItem('sessionId');
+                window.location.href = 'index.html';
+            };
+
+            // Wire up Error Overlay 'Try Again' button
+            document.getElementById('btnErrorAction').addEventListener('click', () => {
+                errorOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('hidden');
+                loadingMsg.textContent = "Attempting to reconnect...";
+                socketClient.connect();
+            });
+
+            // Wire up 'Leave Session' button in top bar
+            const btnEndSession = document.getElementById('btnStudentEndSession');
+            if (btnEndSession) {
+                btnEndSession.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to leave the session?')) {
+                        socketClient.disconnect();
+                        if (faceAnalyzer) faceAnalyzer.stop();
+                        // Also stop the raw video stream tracks
+                        if (videoElem.srcObject) {
+                            videoElem.srcObject.getTracks().forEach(track => track.stop());
+                        }
+                        localStorage.removeItem('studentName');
+                        localStorage.removeItem('sessionId');
+                        window.location.href = 'index.html';
+                    }
+                });
+            }
+
+            // 2. Init CV components
+            const videoElem = document.getElementById('videoElement');
+            const canvasElem = document.getElementById('overlayCanvas');
+            
+            const dataCollector = new DataCollector(5000); // 5 sec interval
+            
+            const faceAnalyzer = new FaceAnalyzer(videoElem, canvasElem, (metrics) => {
+                // Remove Loading UI
+                if (loadingOverlay.style.display !== 'none') {
+                    loadingOverlay.style.display = 'none';
+                }
+
+                // Add to 5-second buffer
+                dataCollector.addFrame(metrics);
+                
+                // --- UPDATE UI REAL-TIME ---
+                
+                // Left Column Status
+                if (metrics.faceDetected) {
+                    badgeFace.textContent = 'YES';
+                    badgeFace.className = 'badge green';
+                } else {
+                    badgeFace.textContent = 'NO';
+                    badgeFace.className = 'badge red';
+                }
+                
+                if (metrics.gazeOnScreen) {
+                    badgeGaze.textContent = 'YES';
+                    badgeGaze.className = 'badge green';
+                } else {
+                    badgeGaze.textContent = 'NO';
+                    badgeGaze.className = 'badge red';
+                }
+                
+                labelEmotion.textContent = metrics.emotion || 'neutral';
+                
+                const attScore = metrics.attentionScore || 0;
+                attentionRingText.textContent = attScore;
+                
+                // Ring circumference = 2 * pi * 34 = ~213
+                const offset = 213 - (attScore / 100) * 213;
+                attentionRing.style.strokeDashoffset = offset;
+                if (attScore >= 70) attentionRing.style.stroke = 'var(--success)';
+                else if (attScore >= 40) attentionRing.style.stroke = 'orange';
+                else attentionRing.style.stroke = 'var(--danger)';
+                
+                // Right Column Metric Cards
+                cardAttention.textContent = attScore;
+                if (attScore >= 70) cardAttention.style.color = 'var(--success)';
+                else if (attScore >= 40) cardAttention.style.color = 'orange';
+                else cardAttention.style.color = 'var(--danger)';
+
+                // Estimate quick engagement logic for real-time display
+                const engageScore = Math.min(100, Math.round(attScore * 0.7 + (metrics.focusStreak || 0) * 2));
+                barEngagement.style.width = engageScore + '%';
+                valEngagement.textContent = engageScore + '%';
+
+                const emoMap = {
+                    focused: '🎯 Focused', neutral: '😐 Neutral', 
+                    engaged: '💡 Engaged', confused: '🤔 Confused',
+                    bored: '🥱 Bored', distracted: '👀 Distracted', drowsy: '😴 Drowsy'
+                };
+                cardEmotion.textContent = emoMap[metrics.emotion] || '😐 Neutral';
+
+                if (metrics.gazeOnScreen) cardGaze.textContent = '💻 On Screen';
+                else cardGaze.textContent = '➡️ Looking ' + (metrics.gazeX > 0 ? 'Right' : (metrics.gazeX < 0 ? 'Left' : 'Away'));
+                
+                cardBlinks.innerHTML = `${Math.round(metrics.blinkRate || 0)} <span class="unit">/min</span>`;
+                cardEyeOpen.textContent = `${Math.round((metrics.eyeOpennessAvg || 0)*100)}%`;
+                
+                cardPose.textContent = `${Math.round(metrics.headPosePitch||0)} / ${Math.round(metrics.headPoseYaw||0)} / ${Math.round(metrics.headPoseRoll||0)}`;
+                
+                cardStreak.innerHTML = `${Math.round(metrics.focusStreak || 0)} <span class="unit">sec</span>`;
+            });
+
+            // Start Analysis
+            try {
+                await faceAnalyzer.start();
+                
+                // Watchdog to detect silent initialization hangs (e.g. CDN blocked, virtual camera stuck)
+                setTimeout(() => {
+                    if (faceAnalyzer && faceAnalyzer.totalFramesAnalyzed === 0) {
+                        loadingMsg.innerHTML = "<b>Camera or AI Models stalling.</b><br>Check if your camera is turning on or used by another app. If this persists, try another browser.";
+                        const spinner = loadingOverlay.querySelector('div');
+                        if (spinner) spinner.style.display = 'none';
+                    }
+                }, 12000);
+                
+            } catch (e) {
+                console.error("Face analyzer start failed", e);
+                loadingMsg.innerHTML = "<b>Failed to start camera!</b><br>Please check browser permissions.";
+                const spinner = loadingOverlay.querySelector('div');
+                if (spinner) spinner.style.display = 'none';
+            }
+
+            // Flush loop (5 sec)
+            setInterval(() => {
+                const intervalData = dataCollector.flush();
+                if (intervalData) {
+                    // Update Sparkline
+                    updateSparkline(intervalData.computed.intervalAttentionScore);
+                    
+                    // Build full payload matching server specs roughly
+                    const fullPayload = buildPayload(
+                        faceAnalyzer.currentMetrics, // We drop in the latest raw frame for some fields needed immediately
+                        socketClient.studentId,
+                        studentName,
+                        sessionId
+                    );
+                    
+                    // Enhance payload with our new 5-sec aggregates (server can log these or pass to DB)
+                    fullPayload.aggregates = intervalData;
+                    
+                    // Send to server
+                    socketClient.sendPayload(fullPayload);
+                }
+            }, 5000);
+        }
+
+
+        init();
+    </script>
+</body>
+</html>

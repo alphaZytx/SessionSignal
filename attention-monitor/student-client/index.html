@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Live Class</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/student.css">
+</head>
+<body class="join-body">
+    <div class="join-card">
+        <h1>Join Live Class</h1>
+        <form id="joinForm">
+            <div class="input-group">
+                <label for="studentName">Student Name</label>
+                <input type="text" id="studentName" required placeholder="Enter your full name">
+            </div>
+            <div class="input-group">
+                <label for="sessionCode">Session Code</label>
+                <input type="text" id="sessionCode" required minlength="6" maxlength="6" pattern=".{6,6}" placeholder="6-character code">
+            </div>
+            <button type="submit" class="btn-primary">Join Session</button>
+        </form>
+    </div>
+
+    <script>
+        // Clear stale session data so monitor.html always redirects back here
+        localStorage.removeItem('studentName');
+        localStorage.removeItem('sessionId');
+        
+        document.getElementById('joinForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('studentName').value.trim();
+            const code = document.getElementById('sessionCode').value.trim();
+            
+            if (name && code) {
+                localStorage.setItem('studentName', name);
+                localStorage.setItem('sessionId', code);
+                window.location.href = 'monitor.html';
+            }
+        });
+    </script>
+</body>
+</html>
