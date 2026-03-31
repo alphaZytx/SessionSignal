@@ -18,16 +18,27 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
-const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '*')
+const configuredOrigins = (process.env.CORS_ALLOWED_ORIGINS || '*')
     .split(',')
     .map(origin => origin.trim())
     .filter(Boolean);
 
-const corsOptions = allowedOrigins.includes('*')
+const derivedOrigins = new Set(configuredOrigins);
+if (!derivedOrigins.has('*')) {
+    const selfOrigins = [
+        `http://localhost:${PORT}`,
+        `http://127.0.0.1:${PORT}`
+    ];
+    selfOrigins.forEach(origin => derivedOrigins.add(origin));
+}
+
+const effectiveOrigins = Array.from(derivedOrigins);
+
+const corsOptions = derivedOrigins.has('*')
     ? { origin: true }
     : {
         origin(origin, callback) {
-            if (!origin || allowedOrigins.includes(origin)) {
+            if (!origin || effectiveOrigins.includes(origin)) {
                 return callback(null, true);
             }
             return callback(new Error('Not allowed by CORS'));
@@ -59,9 +70,9 @@ app.get('/api/health', (req, res) => {
 
 // Set up Socket.io
 const io = new Server(server, {
-    cors: allowedOrigins.includes('*')
+    cors: derivedOrigins.has('*')
         ? { origin: true, methods: ['GET', 'POST'] }
-        : { origin: allowedOrigins, methods: ['GET', 'POST'] }
+        : { origin: effectiveOrigins, methods: ['GET', 'POST'] }
 });
 
 // ─── IN-MEMORY STATE ──────────────────────────────────────────────────────────
