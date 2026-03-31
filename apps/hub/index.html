@@ -2,183 +2,144 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ClassPulse Control Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClassPulse | Attention Monitoring</title>
     <link rel="stylesheet" href="./css/styles.css" />
     <script defer src="./js/main.js"></script>
   </head>
   <body>
-    <main class="layout">
-      <header class="hero">
-        <p class="eyebrow">ClassPulse Platform • Student Attention Monitoring</p>
-        <h1>Production Control Hub</h1>
-        <p class="lead">
-          Orchestrate every touchpoint—Teacher dashboard, Student capture, API, and Supabase policies—from a single launchpad
-          designed for deployments on Netlify + Supabase.
-        </p>
+    <div class="shell">
+      <header class="hero-block" id="top">
+        <nav class="site-nav">
+          <button class="logo" data-nav="/">ClassPulse</button>
+          <div class="nav-links">
+            <button data-scroll="#mission">Mission</button>
+            <button data-scroll="#apps">Apps</button>
+          </div>
+          <div class="nav-actions">
+            <button class="btn ghost" data-nav="/teacher">Teacher Login</button>
+            <button class="btn primary-light" data-nav="/student">Student Access</button>
+            <button class="btn outline" data-nav="/hub/admin.html">Admin Login</button>
+          </div>
+          <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+        </nav>
 
-        <div class="hero-actions">
-          <button class="btn primary" data-nav="/teacher">Launch Teacher Dashboard</button>
-          <button class="btn secondary" data-nav="/student">Share Student Link</button>
-          <button class="btn tertiary" data-scroll="#deploy-plan">View Deployment Plan</button>
-        </div>
+        <div class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Student Attention Monitoring</p>
+            <h1>Keep every class calm, focused, and seen.</h1>
+            <p>Live attention trends for teachers, simple join flow for students, and a control panel leaders can trust.</p>
+            <div class="hero-cta">
+              <button class="btn primary" data-nav="/teacher">Enter Teacher Space</button>
+              <button class="btn secondary" data-scroll="#apps">View Experiences</button>
+            </div>
+            <div class="hero-stat">
+              <div>
+                <strong data-count="120" data-suffix="+">0</strong>
+                <span>classes monitored this term</span>
+              </div>
+              <div>
+                <strong data-count="92" data-suffix="%">0</strong>
+                <span>teachers report higher engagement</span>
+              </div>
+            </div>
+          </div>
 
-        <div class="hero-stats">
-          <article>
-            <span class="label">Supabase Auth</span>
-            <strong>Ready</strong>
-            <small>JWT + RLS placeholders configured</small>
-          </article>
-          <article>
-            <span class="label">Realtime Engine</span>
-            <strong>Socket.IO</strong>
-            <small>Live attention + alerts stream</small>
-          </article>
-          <article>
-            <span class="label">Deploy Target</span>
-            <strong>Netlify</strong>
-            <small>hub / teacher / student contexts</small>
-          </article>
+          <div class="hero-card">
+            <h3>Today's Pulse</h3>
+            <ul>
+              <li><span>Focus score</span><strong data-count="86">0</strong></li>
+              <li><span>Active classrooms</span><strong data-count="12">0</strong></li>
+              <li><span>Alerts resolved</span><strong data-count="7">0</strong></li>
+            </ul>
+            <button class="pill" data-nav="/hub/admin.html">Check readiness</button>
+          </div>
         </div>
       </header>
 
-      <section class="grid apps-grid" aria-label="Applications">
-        <article class="card app-card" data-nav="/teacher">
-          <div class="card-meta">
-            <span class="badge badge-live">Live</span>
-            <h2>Teacher Analytics</h2>
-            <p>Monitor class energy, emotion blends, and trend alerts with second-by-second context.</p>
+      <main>
+        <section class="section mission" id="mission">
+          <div class="section-head">
+            <h2>Built for people, not dashboards</h2>
+            <p>Students stay private, teachers see the moments that matter, and admins get a clean signal for coaching.</p>
           </div>
-          <div class="cta">Open dashboard →</div>
-        </article>
-
-        <article class="card app-card" data-nav="/student">
-          <div class="card-meta">
-            <span class="badge badge-live">Live</span>
-            <h2>Student Capture</h2>
-            <p>Secure MediaPipe client with local compute, supremely light payloads, and QR-ready join flow.</p>
+          <div class="pill-grid">
+            <article>
+              <h3>Private by design</h3>
+              <p>Video never leaves the student browser. Only gentle attention summaries are shared.</p>
+            </article>
+            <article>
+              <h3>Friendly coaching</h3>
+              <p>Teachers get simple cues: "stretch break?", "celebrate Maya's focus streak", "check in with Leo".</p>
+            </article>
+            <article>
+              <h3>School-wide clarity</h3>
+              <p>Leaders watch trends for grades or campuses without drowning in charts.</p>
+            </article>
           </div>
-          <div class="cta">Open student portal →</div>
-        </article>
+        </section>
 
-        <article class="card app-card muted" data-nav="">
-          <div class="card-meta">
-            <span class="badge badge-soon">Soon</span>
-            <h2>Access & Org Settings</h2>
-            <p>Centralize Supabase Auth roles, Org invitations, and branded login experiences.</p>
+        <section class="section apps" id="apps">
+          <div class="section-head">
+            <h2>Pick your space</h2>
+            <p>One platform, three dedicated experiences.</p>
           </div>
-          <div class="cta">In roadmap</div>
-        </article>
-      </section>
+          <div class="app-grid">
+            <article class="app-card" data-nav="/teacher">
+              <h3>Teacher Dashboard</h3>
+              <p>Live tiles, emotion mix, smart nudges, and after-class recap.</p>
+              <span>Open dashboard &rarr;</span>
+            </article>
+            <article class="app-card" data-nav="/student">
+              <h3>Student Portal</h3>
+              <p>Two fields and done. Runs in the browser with MediaPipe and Socket updates.</p>
+              <span>Open student portal &rarr;</span>
+            </article>
+            <article class="app-card" data-nav="/hub/admin.html">
+              <h3>Admin Console</h3>
+              <p>Invite staff, view campuses, and track focus goals.</p>
+              <span>Visit admin area &rarr;</span>
+            </article>
+          </div>
+        </section>
 
-      <section class="ops-grid" id="deploy-plan">
-        <article class="panel status-panel">
-          <header>
-            <div>
-              <p class="label">Operations</p>
-              <h3>Deployment Checklist</h3>
-            </div>
-            <button id="refresh-status" class="btn tertiary small">Refresh</button>
-          </header>
-          <ul id="status-list">
-            <li data-app="api">
-              <div>
-                <strong>API Server</strong>
-                <small>Express + SQLite/Supabase bridge</small>
-              </div>
-              <span class="status-pill pending">pending</span>
-            </li>
-            <li data-app="teacher">
-              <div>
-                <strong>Teacher Dashboard</strong>
-                <small>Netlify build context `teacher`</small>
-              </div>
-              <span class="status-pill pending">pending</span>
-            </li>
-            <li data-app="student">
-              <div>
-                <strong>Student Client</strong>
-                <small>Netlify build context `student`</small>
-              </div>
-              <span class="status-pill pending">pending</span>
-            </li>
-          </ul>
-        </article>
+        <section class="section join" id="join">
+          <div class="join-copy">
+            <h2>Students, join with two fields</h2>
+            <p>Your teacher gives you a code. Enter it with your first name, and you are in.</p>
+            <ul>
+              <li>Chrome or Edge recommended</li>
+              <li>No downloads needed</li>
+              <li>Your camera feed stays local</li>
+            </ul>
+          </div>
+          <form class="join-form" id="student-join-form">
+            <label>First name<input type="text" name="studentName" placeholder="Jordan" required /></label>
+            <label>Session code<input type="text" name="sessionCode" placeholder="ABC123" maxlength="6" required /></label>
+            <button class="btn primary" type="submit">Join class</button>
+            <p class="small-text">Need help? Ask your teacher for the code or refresh the page.</p>
+          </form>
+        </section>
+      </main>
 
-        <article class="panel env-panel">
-          <p class="label">Environment Control</p>
-          <h3>Supabase & API Secrets</h3>
-          <ul class="env-list">
-            <li>
-              <span>SUPABASE_URL</span>
-              <span class="pill pill-safe">configured</span>
-            </li>
-            <li>
-              <span>SUPABASE_ANON_KEY</span>
-              <span class="pill pill-safe">browser</span>
-            </li>
-            <li>
-              <span>SUPABASE_SERVICE_ROLE_KEY</span>
-              <span class="pill pill-lock">server only</span>
-            </li>
-            <li>
-              <span>SESSION_DATABASE_PATH</span>
-              <span class="pill pill-safe">apps/api/data</span>
-            </li>
-            <li>
-              <span>CORS_ALLOWED_ORIGINS</span>
-              <span class="pill pill-safe">auto + custom</span>
-            </li>
-          </ul>
-          <p class="hint">
-            Mirror these variables inside each Netlify site so browsers can talk to the hosted API without leaking
-            privileged keys.
-          </p>
-        </article>
-      </section>
-
-      <section class="timeline">
-        <p class="label">Go-Live Flow</p>
-        <h3>Ship in Three Moves</h3>
-        <ol>
-          <li>
-            <span class="step">01</span>
-            <div>
-              <strong>Push to GitHub</strong>
-              <p>Monorepo already staged for `main`. Each app inherits tooling from the root scripts.</p>
-            </div>
-          </li>
-          <li>
-            <span class="step">02</span>
-            <div>
-              <strong>Wire Netlify</strong>
-              <p>Use default hub deployment for `main` and context overrides for `teacher` + `student` branches.</p>
-            </div>
-          </li>
-          <li>
-            <span class="step">03</span>
-            <div>
-              <strong>Activate Supabase Auth</strong>
-              <p>Drop your project secrets in `.env` + Netlify, then enforce org policies inside Supabase Studio.</p>
-            </div>
-          </li>
-        </ol>
-      </section>
-
-      <section class="cta-final">
+      <footer class="site-footer">
         <div>
-          <h2>Need to validate before launch?</h2>
-          <p>Run `npm run dev`, review `/api/health`, and keep this hub open to monitor readiness in real time.</p>
+          <h4>ClassPulse</h4>
+          <p>Attention insights that feel human.</p>
         </div>
-        <div class="cta-final__actions">
-          <button class="btn primary" data-nav="/api/health">Ping API</button>
-          <button class="btn secondary" data-nav="/teacher">Open Teacher View</button>
+        <div>
+          <strong>Navigate</strong>
+          <a data-scroll="#mission">Mission</a>
+          <a data-scroll="#apps">Apps</a>
+          <a data-scroll="#join">Join</a>
         </div>
-      </section>
-    </main>
-
-    <footer>
-      <small>ClassPulse © 2026 • Built for privacy-first classroom analytics. Configure Netlify env vars before inviting teachers.</small>
-    </footer>
+        <div>
+          <strong>Need access?</strong>
+          <a data-nav="/teacher">Teacher Login</a>
+          <a data-nav="/hub/admin.html">Admin Login</a>
+          <a data-nav="/student">Student Portal</a>
+        </div>
+      </footer>
+    </div>
   </body>
 </html>

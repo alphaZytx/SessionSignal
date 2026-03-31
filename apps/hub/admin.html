@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClassPulse Admin</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script defer src="./js/main.js"></script>
+  </head>
+  <body class="admin-body">
+    <div class="admin-shell">
+      <header class="admin-header">
+        <button class="logo" data-nav="/">ClassPulse</button>
+        <span>Admin Console (preview)</span>
+        <div class="header-actions">
+          <button class="btn ghost" data-nav="/">Back to site</button>
+        </div>
+      </header>
+
+      <main class="admin-main">
+        <section class="admin-login">
+          <h1>Sign in as admin</h1>
+          <p>Use your school email. In this preview, no account is created—we simply show the workflow.</p>
+          <form class="login-form">
+            <label>Email<input type="email" placeholder="you@school.edu" required /></label>
+            <label>Password<input type="password" placeholder="••••••••" required /></label>
+            <button class="btn primary" type="submit">Continue</button>
+          </form>
+          <div class="login-alt">
+            <p>Need an account?</p>
+            <button class="btn secondary" type="button">Request access</button>
+          </div>
+        </section>
+
+        <section class="admin-panels">
+          <article class="panel stats-panel">
+            <h2>Snapshot</h2>
+            <div class="stat-grid">
+              <div>
+                <span>Active classes</span>
+                <strong data-count="12">0</strong>
+              </div>
+              <div>
+                <span>Focus streaks today</span>
+                <strong data-count="34">0</strong>
+              </div>
+              <div>
+                <span>Alerts resolved</span>
+                <strong data-count="7">0</strong>
+              </div>
+              <div>
+                <span>Pending invites</span>
+                <strong data-count="5">0</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel" id="status-panel">
+            <header>
+              <div>
+                <p class="eyebrow small">Systems</p>
+                <h3>Go-live checklist</h3>
+              </div>
+              <button id="refresh-status" class="btn tertiary small">Refresh</button>
+            </header>
+            <ul id="status-list">
+              <li data-app="api"><strong>Core API</strong><span class="status-pill pending">pending</span></li>
+              <li data-app="teacher"><strong>Teacher Dashboard</strong><span class="status-pill pending">pending</span></li>
+              <li data-app="student"><strong>Student Portal</strong><span class="status-pill pending">pending</span></li>
+            </ul>
+          </article>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
