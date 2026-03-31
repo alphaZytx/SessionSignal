@@ -1,6 +1,7 @@
-const cards = document.querySelectorAll('.card[data-target]');
 const statusList = document.getElementById('status-list');
 const refreshBtn = document.getElementById('refresh-status');
+const navElements = document.querySelectorAll('[data-nav]');
+const scrollElements = document.querySelectorAll('[data-scroll]');
 
 const STATUS_ENDPOINTS = {
   api: '/api/health',
@@ -8,9 +9,9 @@ const STATUS_ENDPOINTS = {
   student: '/student/index.html'
 };
 
-cards.forEach((card) => {
-  card.addEventListener('click', () => {
-    const target = card.dataset.target;
+navElements.forEach((el) => {
+  el.addEventListener('click', () => {
+    const target = el.dataset.nav;
     if (!target) {
       return;
     }
@@ -19,6 +20,15 @@ cards.forEach((card) => {
       return;
     }
     window.location.href = target;
+  });
+});
+
+scrollElements.forEach((el) => {
+  el.addEventListener('click', () => {
+    const selector = el.dataset.scroll;
+    if (!selector) return;
+    const block = document.querySelector(selector);
+    block?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 });
 

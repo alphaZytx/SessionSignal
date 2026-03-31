@@ -8,55 +8,177 @@
     <script defer src="./js/main.js"></script>
   </head>
   <body>
-    <header class="hero">
-      <div>
-        <p class="eyebrow">Student Attention Monitoring System</p>
-        <h1>Control Hub</h1>
-        <p>Launch the correct experience, view deployment health, and manage Supabase credentials from one place.</p>
-      </div>
-      <div class="tags">
-        <span class="tag">Netlify ready</span>
-        <span class="tag">Supabase connected</span>
-        <span class="tag">Multi app</span>
-      </div>
-    </header>
+    <main class="layout">
+      <header class="hero">
+        <p class="eyebrow">ClassPulse Platform • Student Attention Monitoring</p>
+        <h1>Production Control Hub</h1>
+        <p class="lead">
+          Orchestrate every touchpoint—Teacher dashboard, Student capture, API, and Supabase policies—from a single launchpad
+          designed for deployments on Netlify + Supabase.
+        </p>
 
-    <main>
-      <section class="grid">
-        <article class="card" data-target="/teacher">
-          <h2>Teacher Analytics</h2>
-          <p>Live insights, post session analytics, and classroom health timeline.</p>
-          <div class="cta">Open dashboard -></div>
+        <div class="hero-actions">
+          <button class="btn primary" data-nav="/teacher">Launch Teacher Dashboard</button>
+          <button class="btn secondary" data-nav="/student">Share Student Link</button>
+          <button class="btn tertiary" data-scroll="#deploy-plan">View Deployment Plan</button>
+        </div>
+
+        <div class="hero-stats">
+          <article>
+            <span class="label">Supabase Auth</span>
+            <strong>Ready</strong>
+            <small>JWT + RLS placeholders configured</small>
+          </article>
+          <article>
+            <span class="label">Realtime Engine</span>
+            <strong>Socket.IO</strong>
+            <small>Live attention + alerts stream</small>
+          </article>
+          <article>
+            <span class="label">Deploy Target</span>
+            <strong>Netlify</strong>
+            <small>hub / teacher / student contexts</small>
+          </article>
+        </div>
+      </header>
+
+      <section class="grid apps-grid" aria-label="Applications">
+        <article class="card app-card" data-nav="/teacher">
+          <div class="card-meta">
+            <span class="badge badge-live">Live</span>
+            <h2>Teacher Analytics</h2>
+            <p>Monitor class energy, emotion blends, and trend alerts with second-by-second context.</p>
+          </div>
+          <div class="cta">Open dashboard →</div>
         </article>
 
-        <article class="card" data-target="/student">
-          <h2>Student Capture</h2>
-          <p>Share the secure join link with students for browser based attention tracking.</p>
-          <div class="cta">Open student portal -></div>
+        <article class="card app-card" data-nav="/student">
+          <div class="card-meta">
+            <span class="badge badge-live">Live</span>
+            <h2>Student Capture</h2>
+            <p>Secure MediaPipe client with local compute, supremely light payloads, and QR-ready join flow.</p>
+          </div>
+          <div class="cta">Open student portal →</div>
         </article>
 
-        <article class="card card-disabled" data-target="">
-          <h2>Access Settings</h2>
-          <p>Coming soon: manage role based logins and Supabase policies for each experience.</p>
-          <div class="cta muted">Planned</div>
+        <article class="card app-card muted" data-nav="">
+          <div class="card-meta">
+            <span class="badge badge-soon">Soon</span>
+            <h2>Access & Org Settings</h2>
+            <p>Centralize Supabase Auth roles, Org invitations, and branded login experiences.</p>
+          </div>
+          <div class="cta">In roadmap</div>
         </article>
       </section>
 
-      <section class="status-panel">
-        <header>
-          <h3>Deployment Checklist</h3>
-          <button id="refresh-status">Refresh</button>
-        </header>
-        <ul id="status-list">
-          <li data-app="api">API Server<span class="status-pill pending">pending</span></li>
-          <li data-app="teacher">Teacher Dashboard<span class="status-pill pending">pending</span></li>
-          <li data-app="student">Student Client<span class="status-pill pending">pending</span></li>
-        </ul>
+      <section class="ops-grid" id="deploy-plan">
+        <article class="panel status-panel">
+          <header>
+            <div>
+              <p class="label">Operations</p>
+              <h3>Deployment Checklist</h3>
+            </div>
+            <button id="refresh-status" class="btn tertiary small">Refresh</button>
+          </header>
+          <ul id="status-list">
+            <li data-app="api">
+              <div>
+                <strong>API Server</strong>
+                <small>Express + SQLite/Supabase bridge</small>
+              </div>
+              <span class="status-pill pending">pending</span>
+            </li>
+            <li data-app="teacher">
+              <div>
+                <strong>Teacher Dashboard</strong>
+                <small>Netlify build context `teacher`</small>
+              </div>
+              <span class="status-pill pending">pending</span>
+            </li>
+            <li data-app="student">
+              <div>
+                <strong>Student Client</strong>
+                <small>Netlify build context `student`</small>
+              </div>
+              <span class="status-pill pending">pending</span>
+            </li>
+          </ul>
+        </article>
+
+        <article class="panel env-panel">
+          <p class="label">Environment Control</p>
+          <h3>Supabase & API Secrets</h3>
+          <ul class="env-list">
+            <li>
+              <span>SUPABASE_URL</span>
+              <span class="pill pill-safe">configured</span>
+            </li>
+            <li>
+              <span>SUPABASE_ANON_KEY</span>
+              <span class="pill pill-safe">browser</span>
+            </li>
+            <li>
+              <span>SUPABASE_SERVICE_ROLE_KEY</span>
+              <span class="pill pill-lock">server only</span>
+            </li>
+            <li>
+              <span>SESSION_DATABASE_PATH</span>
+              <span class="pill pill-safe">apps/api/data</span>
+            </li>
+            <li>
+              <span>CORS_ALLOWED_ORIGINS</span>
+              <span class="pill pill-safe">auto + custom</span>
+            </li>
+          </ul>
+          <p class="hint">
+            Mirror these variables inside each Netlify site so browsers can talk to the hosted API without leaking
+            privileged keys.
+          </p>
+        </article>
+      </section>
+
+      <section class="timeline">
+        <p class="label">Go-Live Flow</p>
+        <h3>Ship in Three Moves</h3>
+        <ol>
+          <li>
+            <span class="step">01</span>
+            <div>
+              <strong>Push to GitHub</strong>
+              <p>Monorepo already staged for `main`. Each app inherits tooling from the root scripts.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step">02</span>
+            <div>
+              <strong>Wire Netlify</strong>
+              <p>Use default hub deployment for `main` and context overrides for `teacher` + `student` branches.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step">03</span>
+            <div>
+              <strong>Activate Supabase Auth</strong>
+              <p>Drop your project secrets in `.env` + Netlify, then enforce org policies inside Supabase Studio.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="cta-final">
+        <div>
+          <h2>Need to validate before launch?</h2>
+          <p>Run `npm run dev`, review `/api/health`, and keep this hub open to monitor readiness in real time.</p>
+        </div>
+        <div class="cta-final__actions">
+          <button class="btn primary" data-nav="/api/health">Ping API</button>
+          <button class="btn secondary" data-nav="/teacher">Open Teacher View</button>
+        </div>
       </section>
     </main>
 
     <footer>
-      <small>Configure real credentials through Netlify environment variables once Supabase keys are issued.</small>
+      <small>ClassPulse © 2026 • Built for privacy-first classroom analytics. Configure Netlify env vars before inviting teachers.</small>
     </footer>
   </body>
 </html>
