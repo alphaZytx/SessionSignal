@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClassPulse Control Hub</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script defer src="./js/main.js"></script>
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Student Attention Monitoring System</p>
+        <h1>Control Hub</h1>
+        <p>Launch the correct experience, view deployment health, and manage Supabase credentials from one place.</p>
+      </div>
+      <div class="tags">
+        <span class="tag">Netlify ready</span>
+        <span class="tag">Supabase connected</span>
+        <span class="tag">Multi app</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="grid">
+        <article class="card" data-target="/teacher">
+          <h2>Teacher Analytics</h2>
+          <p>Live insights, post session analytics, and classroom health timeline.</p>
+          <div class="cta">Open dashboard -></div>
+        </article>
+
+        <article class="card" data-target="/student">
+          <h2>Student Capture</h2>
+          <p>Share the secure join link with students for browser based attention tracking.</p>
+          <div class="cta">Open student portal -></div>
+        </article>
+
+        <article class="card card-disabled" data-target="">
+          <h2>Access Settings</h2>
+          <p>Coming soon: manage role based logins and Supabase policies for each experience.</p>
+          <div class="cta muted">Planned</div>
+        </article>
+      </section>
+
+      <section class="status-panel">
+        <header>
+          <h3>Deployment Checklist</h3>
+          <button id="refresh-status">Refresh</button>
+        </header>
+        <ul id="status-list">
+          <li data-app="api">API Server<span class="status-pill pending">pending</span></li>
+          <li data-app="teacher">Teacher Dashboard<span class="status-pill pending">pending</span></li>
+          <li data-app="student">Student Client<span class="status-pill pending">pending</span></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <small>Configure real credentials through Netlify environment variables once Supabase keys are issued.</small>
+    </footer>
+  </body>
+</html>

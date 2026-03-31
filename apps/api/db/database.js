@@ -2,13 +2,20 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir);
+const apiRoot = path.resolve(__dirname, '..');
+const configuredPath = process.env.SESSION_DATABASE_PATH;
+const resolvedDbPath = configuredPath
+    ? (path.isAbsolute(configuredPath)
+        ? configuredPath
+        : path.resolve(apiRoot, configuredPath))
+    : path.join(apiRoot, 'data', 'sessions.db');
+
+const resolvedDir = path.dirname(resolvedDbPath);
+if (!fs.existsSync(resolvedDir)) {
+    fs.mkdirSync(resolvedDir, { recursive: true });
 }
 
-const DB_PATH = path.join(dataDir, 'sessions.db');
-const db = new Database(DB_PATH);
+const db = new Database(resolvedDbPath);
 
 // Enable WAL for better concurrent write performance
 db.pragma('journal_mode = WAL');

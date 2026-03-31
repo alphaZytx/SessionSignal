@@ -1,0 +1,18 @@
+{
+  "name": "classpulse-monorepo",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Student Attention Monitoring System monorepo (API + clients + control hub)",
+  "scripts": {
+    "dev:api": "npm run dev --prefix apps/api",
+    "start:api": "npm run start --prefix apps/api",
+    "install:api": "npm install --prefix apps/api",
+    "build:student": "node tools/build-static.mjs student",
+    "build:teacher": "node tools/build-static.mjs teacher",
+    "build:hub": "node tools/build-static.mjs hub",
+    "build:web": "npm run build:student && npm run build:teacher && npm run build:hub"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

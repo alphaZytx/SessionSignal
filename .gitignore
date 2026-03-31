@@ -1,0 +1,31 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Node modules
+node_modules/
+apps/*/node_modules/
+
+# Build artifacts
+coverage/
+dist/
+.out/
+.tmp/
+
+# Database files
+apps/api/data/
+apps/api/storage/
+apps/api/*.db
+apps/api/**/*.db-journal
+
+# Netlify
+.netlify/
+
+# Supabase
+supabase/.branches

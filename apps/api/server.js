@@ -1,9 +1,15 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
+
+require('dotenv').config({
+    path: path.resolve(__dirname, '../../.env'),
+    override: false
+});
 
 const db = require('./db/database');
 const sessionsRouter = require('./routes/sessions');
@@ -12,19 +18,50 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '*')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+const corsOptions = allowedOrigins.includes('*')
+    ? { origin: true }
+    : {
+        origin(origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Not allowed by CORS'));
+        }
+    };
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Serving Student and Teacher clients
-app.use('/student', express.static(path.join(__dirname, '..', 'student-client')));
-app.use('/teacher', express.static(path.join(__dirname, '..', 'teacher-dashboard')));
+const staticRoot = path.resolve(__dirname, '..');
+const mountStatic = (mountPath, folder) => {
+    const absolutePath = path.join(staticRoot, folder);
+    if (fs.existsSync(absolutePath)) {
+        app.use(mountPath, express.static(absolutePath));
+    }
+};
+
+// Serving Student, Teacher, and Hub clients
+mountStatic('/', 'hub');
+mountStatic('/hub', 'hub');
+mountStatic('/student', 'student');
+mountStatic('/teacher', 'teacher');
 
 // REST Endpoints
 app.use('/api/sessions', sessionsRouter);
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', time: Date.now() });
+});
 
 // Set up Socket.io
 const io = new Server(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] }
+    cors: allowedOrigins.includes('*')
+        ? { origin: true, methods: ['GET', 'POST'] }
+        : { origin: allowedOrigins, methods: ['GET', 'POST'] }
 });
 
 // ─── IN-MEMORY STATE ──────────────────────────────────────────────────────────
