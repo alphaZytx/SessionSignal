@@ -10,7 +10,10 @@
     "build:student": "node tools/build-static.mjs student",
     "build:teacher": "node tools/build-static.mjs teacher",
     "build:hub": "node tools/build-static.mjs hub",
-    "build:web": "npm run build:student && npm run build:teacher && npm run build:hub"
+    "build:web": "npm run build:student && npm run build:teacher && npm run build:hub",
+    "setup": "npm run install:api",
+    "dev": "npm run dev:api",
+    "start": "npm run start:api"
   },
   "engines": {
     "node": ">=18.0.0"

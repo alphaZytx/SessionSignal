@@ -20,13 +20,15 @@ docs/         -> deployment notes and future migration guides
 
 ```bash
 cp .env.example .env        # add Supabase + deployment secrets
-npm install --prefix apps/api
-npm run dev:api             # API + Socket server on http://localhost:3000
+npm run setup               # installs API dependencies
+npm run dev                 # API + Socket server on http://localhost:3000
 ```
 
 - Hub: http://localhost:3000/
 - Student Client: http://localhost:3000/student
 - Teacher Dashboard: http://localhost:3000/teacher
+
+Use `npm run start` for a production-style boot without the Node watcher once you're ready to mirror your Netlify deployment locally.
 
 ## Environment Variables
 

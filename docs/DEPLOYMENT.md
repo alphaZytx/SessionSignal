@@ -30,7 +30,7 @@
 
 ## 5. Local Development
 ```bash
-npm install --prefix apps/api
-npm run dev:api
+npm run setup
+npm run dev
 # navigate to http://localhost:3000/hub for the aggregator view
 ```
