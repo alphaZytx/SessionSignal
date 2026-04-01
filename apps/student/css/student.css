@@ -32,6 +32,24 @@ body {
     align-items: center;
     justify-content: center;
     height: 100vh;
+    position: relative;
+    padding: 2rem;
+}
+
+.home-link {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
 }
 
 .join-card {

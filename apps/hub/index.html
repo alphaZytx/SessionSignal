@@ -3,35 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ClassPulse | Attention Monitoring</title>
-    <link rel="stylesheet" href="./css/styles.css" />
-    <script defer src="./js/main.js"></script>
+    <meta name="description" content="ClassPulse – Real-time student attention monitoring. Live attention trends for teachers, simple join flow for students, and a control panel leaders can trust." />
+    <title>ClassPulse | Student Attention Monitoring</title>
+    <link rel="stylesheet" href="./css/styles.css?v=3" />
+    <script defer src="./js/main.js?v=3"></script>
   </head>
   <body>
     <div class="shell">
+
+      <!-- ── Navbar ── -->
       <header class="hero-block" id="top">
-        <nav class="site-nav">
-          <button class="logo" data-nav="/">ClassPulse</button>
+        <nav class="site-nav" id="site-nav">
+          <button class="logo" data-nav="/">Class<span>Pulse</span></button>
+
           <div class="nav-links">
             <button data-scroll="#mission">Mission</button>
             <button data-scroll="#apps">Apps</button>
+            <button data-scroll="#join">Join a Class</button>
           </div>
+
           <div class="nav-actions">
-            <button class="btn ghost" data-nav="/teacher">Teacher Login</button>
-            <button class="btn primary-light" data-nav="/student">Student Access</button>
-            <button class="btn outline" data-nav="/hub/admin.html">Admin Login</button>
+            <button class="btn ghost sm" data-nav="/teacher" id="nav-teacher-btn">Teacher Login</button>
+            <button class="btn primary-light sm" data-nav="/student" id="nav-student-btn">Student Access</button>
+            <button class="btn outline sm" data-nav="/hub/admin.html" id="nav-admin-btn">Admin</button>
           </div>
-          <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+
+          <button class="nav-toggle" aria-label="Toggle navigation" id="nav-toggle">&#9776;</button>
         </nav>
 
+        <!-- ── Hero ── -->
         <div class="hero">
           <div class="hero-copy">
             <p class="eyebrow">Student Attention Monitoring</p>
-            <h1>Keep every class calm, focused, and seen.</h1>
-            <p>Live attention trends for teachers, simple join flow for students, and a control panel leaders can trust.</p>
+            <h1>Keep every class <em>calm, focused,</em> and seen.</h1>
+            <p>Live attention trends for teachers, a simple two-field join for students, and a control panel leaders can trust.</p>
             <div class="hero-cta">
-              <button class="btn primary" data-nav="/teacher">Enter Teacher Space</button>
-              <button class="btn secondary" data-scroll="#apps">View Experiences</button>
+              <button class="btn primary" data-nav="/teacher" id="hero-teacher-btn">Enter Teacher Space</button>
+              <button class="btn secondary" data-scroll="#apps" id="hero-apps-btn">View Experiences</button>
             </div>
             <div class="hero-stat">
               <div>
@@ -42,104 +50,175 @@
                 <strong data-count="92" data-suffix="%">0</strong>
                 <span>teachers report higher engagement</span>
               </div>
+              <div>
+                <strong data-count="3400" data-suffix="+">0</strong>
+                <span>students enrolled</span>
+              </div>
             </div>
           </div>
 
+          <!-- Pulse card -->
           <div class="hero-card">
-            <h3>Today's Pulse</h3>
+            <div class="hero-card-header">
+              <h3>Today's Pulse</h3>
+              <span class="live-badge">Live</span>
+            </div>
             <ul>
-              <li><span>Focus score</span><strong data-count="86">0</strong></li>
-              <li><span>Active classrooms</span><strong data-count="12">0</strong></li>
-              <li><span>Alerts resolved</span><strong data-count="7">0</strong></li>
+              <li>
+                <span class="metric-label">
+                  <span class="metric-icon blue">🎯</span>
+                  Focus score
+                </span>
+                <strong data-count="86">0</strong>
+              </li>
+              <li>
+                <span class="metric-label">
+                  <span class="metric-icon green">🏫</span>
+                  Active classrooms
+                </span>
+                <strong data-count="12">0</strong>
+              </li>
+              <li>
+                <span class="metric-label">
+                  <span class="metric-icon amber">⚡</span>
+                  Alerts resolved
+                </span>
+                <strong data-count="7">0</strong>
+              </li>
             </ul>
-            <button class="pill" data-nav="/hub/admin.html">Check readiness</button>
+            <div class="card-footer">
+              <button class="pill-btn" data-nav="/hub/admin.html" id="pulse-admin-btn">
+                Check system readiness →
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       <main>
+
+        <!-- ── Mission ── -->
+        <div class="section-divider"></div>
         <section class="section mission" id="mission">
           <div class="section-head">
+            <span class="section-label">Our Mission</span>
             <h2>Built for people, not dashboards</h2>
             <p>Students stay private, teachers see the moments that matter, and admins get a clean signal for coaching.</p>
           </div>
+
           <div class="pill-grid">
             <article>
+              <div class="feature-icon blue">🔒</div>
               <h3>Private by design</h3>
-              <p>Video never leaves the student browser. Only gentle attention summaries are shared.</p>
+              <p>Video never leaves the student browser. Only gentle attention summaries are shared — no recordings, no surveillance.</p>
             </article>
             <article>
+              <div class="feature-icon violet">💬</div>
               <h3>Friendly coaching</h3>
-              <p>Teachers get simple cues: "stretch break?", "celebrate Maya's focus streak", "check in with Leo".</p>
+              <p>Teachers get simple, human cues: "stretch break?", "celebrate Maya's focus streak", "check in with Leo".</p>
             </article>
             <article>
+              <div class="feature-icon teal">📊</div>
               <h3>School-wide clarity</h3>
-              <p>Leaders watch trends for grades or campuses without drowning in charts.</p>
+              <p>Leaders watch trends for grades or campuses without drowning in charts — one clear signal, always actionable.</p>
             </article>
           </div>
         </section>
 
-        <section class="section apps" id="apps">
-          <div class="section-head">
-            <h2>Pick your space</h2>
-            <p>One platform, three dedicated experiences.</p>
-          </div>
-          <div class="app-grid">
-            <article class="app-card" data-nav="/teacher">
-              <h3>Teacher Dashboard</h3>
-              <p>Live tiles, emotion mix, smart nudges, and after-class recap.</p>
-              <span>Open dashboard &rarr;</span>
-            </article>
-            <article class="app-card" data-nav="/student">
-              <h3>Student Portal</h3>
-              <p>Two fields and done. Runs in the browser with MediaPipe and Socket updates.</p>
-              <span>Open student portal &rarr;</span>
-            </article>
-            <article class="app-card" data-nav="/hub/admin.html">
-              <h3>Admin Console</h3>
-              <p>Invite staff, view campuses, and track focus goals.</p>
-              <span>Visit admin area &rarr;</span>
-            </article>
+        <!-- ── Apps ── -->
+        <div class="section-divider"></div>
+        <section class="section apps-bg" id="apps">
+          <div class="section" style="padding-top: 0; padding-bottom: 0;">
+            <div class="section-head">
+              <span class="section-label">Experiences</span>
+              <h2>Pick your space</h2>
+              <p>One platform, three dedicated experiences — each crafted for a specific role.</p>
+            </div>
+
+            <div class="app-grid">
+              <article class="app-card" data-nav="/teacher" id="app-teacher-card">
+                <div class="app-card-icon blue">📋</div>
+                <h3>Teacher Dashboard</h3>
+                <p>Live attention tiles, emotion mix overview, smart nudges, and a detailed after-class recap — all in one view.</p>
+                <span class="card-link">Open dashboard →</span>
+              </article>
+
+              <article class="app-card" data-nav="/student" id="app-student-card">
+                <div class="app-card-icon green">🎓</div>
+                <h3>Student Portal</h3>
+                <p>Two fields and you're in. Runs entirely in the browser using MediaPipe — no downloads, no account needed.</p>
+                <span class="card-link">Open student portal →</span>
+              </article>
+
+              <article class="app-card" data-nav="/hub/admin.html" id="app-admin-card">
+                <div class="app-card-icon violet">⚙️</div>
+                <h3>Admin Console</h3>
+                <p>Invite staff, view campuses, and track focus goals across the entire school or district at a glance.</p>
+                <span class="card-link">Visit admin area →</span>
+              </article>
+            </div>
           </div>
         </section>
 
-        <section class="section join" id="join">
-          <div class="join-copy">
-            <h2>Students, join with two fields</h2>
-            <p>Your teacher gives you a code. Enter it with your first name, and you are in.</p>
-            <ul>
-              <li>Chrome or Edge recommended</li>
-              <li>No downloads needed</li>
-              <li>Your camera feed stays local</li>
-            </ul>
+        <!-- ── Join ── -->
+        <div class="section-divider"></div>
+        <section class="section" id="join">
+          <div class="join-wrap">
+            <div class="join-copy">
+              <span class="section-label">Students</span>
+              <h2>Join a class with just two fields</h2>
+              <p>Your teacher gives you a session code. Enter it alongside your first name — and you're in instantly.</p>
+              <ul class="join-checklist">
+                <li>Chrome or Edge recommended for best performance</li>
+                <li>No downloads, no accounts, no hassle</li>
+                <li>Your camera feed stays entirely local</li>
+                <li>Works on any school-issued device</li>
+              </ul>
+            </div>
+
+            <form class="join-form" id="student-join-form">
+              <div class="form-group">
+                <label for="studentName">First name</label>
+                <input type="text" id="studentName" name="studentName" placeholder="Jordan" required autocomplete="given-name" />
+              </div>
+              <div class="form-group">
+                <label for="sessionCode">Session code</label>
+                <input type="text" id="sessionCode" name="sessionCode" placeholder="ABC123" maxlength="6" required autocomplete="off" style="text-transform: uppercase;" />
+              </div>
+              <button class="btn primary" type="submit" id="join-submit-btn">Join class →</button>
+              <p class="small-text">Need help? Ask your teacher for the session code, or try refreshing the page.</p>
+            </form>
           </div>
-          <form class="join-form" id="student-join-form">
-            <label>First name<input type="text" name="studentName" placeholder="Jordan" required /></label>
-            <label>Session code<input type="text" name="sessionCode" placeholder="ABC123" maxlength="6" required /></label>
-            <button class="btn primary" type="submit">Join class</button>
-            <p class="small-text">Need help? Ask your teacher for the code or refresh the page.</p>
-          </form>
         </section>
+
       </main>
 
+      <!-- ── Footer ── -->
       <footer class="site-footer">
-        <div>
-          <h4>ClassPulse</h4>
-          <p>Attention insights that feel human.</p>
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <button class="logo" data-nav="/">Class<span>Pulse</span></button>
+            <p>Real-time attention insights that feel human — for teachers, students, and the leaders who support them.</p>
+          </div>
+          <div class="footer-col">
+            <strong>Navigate</strong>
+            <a data-scroll="#mission">Mission</a>
+            <a data-scroll="#apps">Apps</a>
+            <a data-scroll="#join">Join a class</a>
+          </div>
+          <div class="footer-col">
+            <strong>Access</strong>
+            <a data-nav="/teacher">Teacher Login</a>
+            <a data-nav="/hub/admin.html">Admin Console</a>
+            <a data-nav="/student">Student Portal</a>
+          </div>
         </div>
-        <div>
-          <strong>Navigate</strong>
-          <a data-scroll="#mission">Mission</a>
-          <a data-scroll="#apps">Apps</a>
-          <a data-scroll="#join">Join</a>
-        </div>
-        <div>
-          <strong>Need access?</strong>
-          <a data-nav="/teacher">Teacher Login</a>
-          <a data-nav="/hub/admin.html">Admin Login</a>
-          <a data-nav="/student">Student Portal</a>
+        <div class="footer-bottom">
+          <p>&copy; 2025 ClassPulse. Student Attention Monitoring System.</p>
+          <p>Privacy-first · Local video processing · No cloud recordings</p>
         </div>
       </footer>
+
     </div>
   </body>
 </html>
