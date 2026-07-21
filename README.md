@@ -1,20 +1,20 @@
 <p align="center">
-  <h1 align="center">🎓 ClassPulse — Student Attention Monitoring System</h1>
+  <h1 align="center">ClassPulse — Student Attention Monitoring System</h1>
   <p align="center">
     <strong>Real-time AI-powered attention tracking for modern classrooms</strong>
   </p>
   <p align="center">
-    <a href="#-features">Features</a> •
-    <a href="#-screenshots">Screenshots</a> •
-    <a href="#-quick-start">Quick Start</a> •
-    <a href="#-architecture">Architecture</a> •
-    <a href="#-tech-stack">Tech Stack</a>
+    <a href="#features">Features</a> •
+    <a href="#screenshots">Screenshots</a> •
+    <a href="#quick-start">Quick Start</a> •
+    <a href="#architecture">Architecture</a> •
+    <a href="#tech-stack">Tech Stack</a>
   </p>
 </p>
 
 ---
 
-## 📖 About
+## About
 
 **ClassPulse** is a comprehensive student attention monitoring system that uses computer vision and AI to track student engagement in real-time during live classes. Teachers get a rich analytics dashboard while students simply join with a name and session code — their webcam feed is analyzed locally for attention score, emotion, gaze direction, blink rate, head pose, and drowsiness.
 
@@ -22,23 +22,23 @@ The system is designed as a monorepo containing four applications: a **Control H
 
 ---
 
-## ✨ Features
+## Features
 
 | Category | Highlights |
 |---|---|
-| 🧠 **AI-Powered Analysis** | Real-time face detection, gaze tracking, emotion recognition, blink rate monitoring, head pose estimation, and drowsiness detection |
-| 📊 **Teacher Dashboard** | Live attention timeline, emotion distribution charts, gaze & blink analytics, head pose visualization, drowsiness tracking, and smart alerts |
-| 🎥 **Student Client** | Webcam-based face mesh tracking, live attention score, engagement level, focus streaks, and attention-over-time graphs |
-| 🔔 **Live Alerts** | Instant notifications for head turns, low blinks, drowsiness, and other attention events |
-| 💡 **Smart Recommendations** | AI-generated class-level engagement recommendations for teachers |
-| 🌐 **Real-time Sync** | Socket.IO-powered live data transmission between students and teacher |
-| 🏠 **Control Hub** | Beautiful landing page with system readiness checks, live pulse stats, and role-based navigation |
+| **AI-Powered Analysis** | Real-time face detection, gaze tracking, emotion recognition, blink rate monitoring, head pose estimation, and drowsiness detection |
+| **Teacher Dashboard** | Live attention timeline, emotion distribution charts, gaze & blink analytics, head pose visualization, drowsiness tracking, and smart alerts |
+| **Student Client** | Webcam-based face mesh tracking, live attention score, engagement level, focus streaks, and attention-over-time graphs |
+| **Live Alerts** | Instant notifications for head turns, low blinks, drowsiness, and other attention events |
+| **Smart Recommendations** | AI-generated class-level engagement recommendations for teachers |
+| **Real-time Sync** | Socket.IO-powered live data transmission between students and teacher |
+| **Control Hub** | Beautiful landing page with system readiness checks, live pulse stats, and role-based navigation |
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-### 🏠 Control Hub — Landing Page
+### Control Hub — Landing Page
 The central entry point with live system stats, role-based navigation for Teachers, Students, and Admins, and a modern dark-themed UI.
 
 <p align="center">
@@ -47,7 +47,7 @@ The central entry point with live system stats, role-based navigation for Teache
 
 ---
 
-### 📊 Teacher Dashboard — Live Session Monitoring
+### Teacher Dashboard — Live Session Monitoring
 A comprehensive real-time analytics dashboard showing class attention scores, attention timeline, emotion distribution, gaze tracking, blink rate analysis, head pose distribution, drowsiness monitoring, live alerts feed, and AI-powered recommendations.
 
 <p align="center">
@@ -56,7 +56,7 @@ A comprehensive real-time analytics dashboard showing class attention scores, at
 
 ---
 
-### 🎥 Student Client — Real-time Attention Tracking
+### Student Client — Real-time Attention Tracking
 The student-facing interface with live webcam face mesh overlay, attention score, engagement level, emotion detection, gaze status, blink rate, eye openness, head pose tracking, focus streak counter, and an attention-over-time graph.
 
 <p align="center">
@@ -65,7 +65,7 @@ The student-facing interface with live webcam face mesh overlay, attention score
 
 ---
 
-### 🚪 Student Join — Session Entry
+### Student Join — Session Entry
 A clean, minimal interface for students to join a live class session by entering their name and the teacher-provided 6-character session code.
 
 <p align="center">
@@ -74,7 +74,7 @@ A clean, minimal interface for students to join a live class session by entering
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - **Node.js** v20+ 
@@ -98,15 +98,15 @@ npm run dev                 # API + Socket server on http://localhost:3000
 
 | Application | URL | Description |
 |---|---|---|
-| 🏠 **Control Hub** | http://localhost:3000/ | Landing page & navigation |
-| 🎥 **Student Client** | http://localhost:3000/student | Join a session & start monitoring |
-| 📊 **Teacher Dashboard** | http://localhost:3000/teacher | Create sessions & view analytics |
+| **Control Hub** | http://localhost:3000/ | Landing page & navigation |
+| **Student Client** | http://localhost:3000/student | Join a session & start monitoring |
+| **Teacher Dashboard** | http://localhost:3000/teacher | Create sessions & view analytics |
 
 > **Tip:** Use `npm run start` for a production-style boot without the Node file watcher.
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ### Directory Structure
 
@@ -153,7 +153,7 @@ Student-Attention-Monitoring-System/
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 | Variable | Description |
 |---|---|
@@ -165,14 +165,14 @@ Student-Attention-Monitoring-System/
 
 ---
 
-## 🔍 Health Check
+## Health Check
 
 - **`/api/health`** — Lightweight endpoint used by the Hub to verify uptime.
 - The Hub status widget pings `/api/health`, `/teacher`, and `/student` so you can quickly verify that all services are running.
 
 ---
 
-## 🗺 Roadmap
+## Roadmap
 
 - [ ] Multi-class support with concurrent session management
 - [ ] Historical analytics and session replay
@@ -182,7 +182,7 @@ Student-Attention-Monitoring-System/
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -195,12 +195,12 @@ Student-Attention-Monitoring-System/
 
 ---
 
-## 📄 License
+## License
 
 This project is open source and available for educational and research purposes.
 
 ---
 
 <p align="center">
-  Made with ❤️ for better classrooms
+  Made with care for better classrooms
 </p>
