@@ -7,10 +7,6 @@
     "dev:api": "npm run dev --prefix apps/api",
     "start:api": "npm run start --prefix apps/api",
     "install:api": "npm install --prefix apps/api",
-    "build:student": "node tools/build-static.mjs student",
-    "build:teacher": "node tools/build-static.mjs teacher",
-    "build:hub": "node tools/build-static.mjs hub",
-    "build:web": "npm run build:student && npm run build:teacher && npm run build:hub",
     "setup": "npm run install:api",
     "dev": "npm run dev:api",
     "start": "npm run start:api"

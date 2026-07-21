@@ -5,7 +5,7 @@
     --text-main: #333333;
     --text-muted: #666666;
     --border-color: #e5e7eb;
-    
+
     --success: #10b981;
     --danger: #ef4444;
 }
@@ -117,7 +117,8 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    color: #e5e7eb; /* overriding to light text for dark mode outside cards */
+    color: #e5e7eb;
+    /* overriding to light text for dark mode outside cards */
 }
 
 /* Top Bar */
@@ -139,16 +140,26 @@ body {
 
 .top-bar .value {
     font-size: 16px;
+    color: rgb(255, 255, 255);
 }
 
-.fw-600 { font-weight: 600; }
-.code-display { font-family: monospace; font-size: 18px; letter-spacing: 2px; color: var(--accent); }
+.fw-600 {
+    font-weight: 600;
+}
+
+.code-display {
+    font-family: monospace;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--accent);
+}
 
 .status-indicator {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 14px;
+    color: rgb(255, 255, 255);
 }
 
 .dot {
@@ -156,8 +167,14 @@ body {
     height: 10px;
     border-radius: 50%;
 }
-.dot.offline { background: var(--danger); }
-.dot.online { background: var(--success); }
+
+.dot.offline {
+    background: var(--danger);
+}
+
+.dot.online {
+    background: var(--success);
+}
 
 /* Main Area */
 .main-split {
@@ -226,7 +243,7 @@ body {
 .status-panel h3 {
     font-size: 16px;
     margin-bottom: 20px;
-    color: #f3f4f6;
+    color: #5984db;
     border-bottom: 1px solid #333;
     padding-bottom: 10px;
 }
@@ -237,6 +254,7 @@ body {
     align-items: center;
     margin-bottom: 16px;
     font-size: 15px;
+    color: rgb(252, 251, 251);
 }
 
 .badge {
@@ -245,8 +263,16 @@ body {
     font-size: 12px;
     font-weight: 700;
 }
-.badge.red { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-.badge.green { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+.badge.red {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+}
+
+.badge.green {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+}
 
 .text-val {
     font-weight: 600;
@@ -279,8 +305,10 @@ body {
     fill: none;
     stroke: var(--accent);
     stroke-width: 6;
-    stroke-dasharray: 213; /* roughly 2 * pi * 34 */
-    stroke-dashoffset: 213; /* 100% hidden initially */
+    stroke-dasharray: 213;
+    /* roughly 2 * pi * 34 */
+    stroke-dashoffset: 213;
+    /* 100% hidden initially */
     stroke-linecap: round;
     transition: stroke-dashoffset 0.3s ease;
 }
@@ -342,8 +370,13 @@ body {
     font-size: 16px;
 }
 
-.emoji-val { font-size: 18px; }
-.icon-val { font-size: 16px; }
+.emoji-val {
+    font-size: 18px;
+}
+
+.icon-val {
+    font-size: 16px;
+}
 
 .progress-bar-container {
     width: 100%;
@@ -364,6 +397,7 @@ body {
     font-size: 14px;
     font-weight: 600;
     text-align: right;
+    color: rgb(252, 251, 251);
 }
 
 /* Sparkline Chart */
@@ -411,8 +445,15 @@ body {
 }
 
 @keyframes pulse {
-    0% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0.2; transform: scale(1.5); }
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0.2;
+        transform: scale(1.5);
+    }
 }
 
 .pulse-dot.active {

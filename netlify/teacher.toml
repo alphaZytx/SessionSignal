@@ -1,3 +1,0 @@
-[build]
-  command = "npm run build:teacher"
-  publish = "dist/teacher"
