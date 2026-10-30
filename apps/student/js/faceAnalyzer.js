@@ -4,6 +4,9 @@ export class FaceAnalyzer {
         this.canvasElement = canvasElement;
         this.canvasCtx = canvasElement.getContext('2d');
         this.onDataCallback = onDataCallback;
+        this.onError = options.onError;
+        this.stopped = false;
+        this.frameErrorReported = false;
 
         // Initialize MediaPipe FaceMesh
         const assetBase = options.assetBase || globalThis.SESSIONSIGNAL_MEDIAPIPE_ASSET_BASE || 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/';
@@ -49,11 +52,21 @@ export class FaceAnalyzer {
     }
 
     async start() {
+        this.stopped = false;
+        this.frameErrorReported = false;
         // Initialize Camera using Camera Utils
         // Requires: <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
         this.camera = new Camera(this.videoElement, {
             onFrame: async () => {
-                await this.faceMesh.send({ image: this.videoElement });
+                if (this.stopped) return;
+                try {
+                    await this.faceMesh.send({ image: this.videoElement });
+                } catch (error) {
+                    if (this.frameErrorReported) return;
+                    this.frameErrorReported = true;
+                    this.stop();
+                    this.onError?.(error);
+                }
             },
             width: 640,
             height: 480
@@ -66,6 +79,7 @@ export class FaceAnalyzer {
     }
 
     stop() {
+        this.stopped = true;
         if (this.camera) {
             this.camera.stop();
         }

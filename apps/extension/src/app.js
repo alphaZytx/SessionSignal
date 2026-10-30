@@ -111,10 +111,29 @@ startButton.addEventListener('click', async () => {
     analyzer = new FaceAnalyzer(document.getElementById('videoElement'), document.getElementById('overlayCanvas'), (metrics) => {
       collector.addFrame(metrics);
       updateMetrics(metrics);
-    }, { assetBase: globalThis.SESSIONSIGNAL_MEDIAPIPE_ASSET_BASE });
+    }, {
+      assetBase: globalThis.SESSIONSIGNAL_MEDIAPIPE_ASSET_BASE,
+      onError: (error) => {
+        const detail = error instanceof Error ? ` ${error.message}` : '';
+        void stopMonitoring(
+          'stopped',
+          'Monitoring stopped after an error',
+          `Camera analysis stopped because frame processing failed.${detail} Return to the join screen and try again.`
+        ).catch((stopError) => {
+          cameraMessage.textContent = `Monitoring stopped, but cleanup reported an error: ${stopError.message || stopError}`;
+        });
+      }
+    });
     await analyzer.start();
+    if (!analyzer || analyzer.stopped) return;
     setStatus('Camera active · connected', 'active');
-    await telemetry.setStatus('connected');
+    try {
+      await telemetry.setStatus('connected');
+    } catch (error) {
+      const detail = error instanceof Error ? `: ${error.message}` : '';
+      setStatus('Camera active · offline', 'offline');
+      document.getElementById('syncText').textContent = `Camera is active; facilitator status could not sync${detail}`;
+    }
     flushTimer = setInterval(async () => {
       if (flushInFlight) return;
       const aggregate = collector?.flush();
@@ -126,6 +145,10 @@ startButton.addEventListener('click', async () => {
         if (chart.data.labels.length > 60) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
         chart.update('none');
         await telemetry.submit(aggregate);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        document.getElementById('syncText').textContent = `Update failed: ${detail}`;
+        setStatus('Camera active · sync issue', 'offline');
       } finally { flushInFlight = false; }
     }, 5000);
   } catch (error) {
@@ -146,11 +169,6 @@ document.addEventListener('visibilitychange', () => {
   if (!analyzer) return;
   if (document.hidden) setStatus('Camera active · background tab', 'offline');
   else setStatus('Camera active · checking connection', 'active');
-});
-window.addEventListener('unhandledrejection', (event) => {
-  if (!analyzer) return;
-  event.preventDefault();
-  stopMonitoring('stopped', 'Monitoring stopped after an error', 'Your camera has been released. Return to the join screen and try again.');
 });
 
 setStatus('Not monitoring', 'idle');

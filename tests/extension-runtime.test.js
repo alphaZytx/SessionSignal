@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MonitoringLease } from '../apps/extension/src/monitoringLease.js';
 import { TelemetryClient } from '../apps/extension/src/telemetryClient.js';
+import { FaceAnalyzer } from '../apps/student/js/faceAnalyzer.js';
 
 function installStorage() {
   const values = {};
@@ -47,4 +48,37 @@ test('failed queue flush preserves packets and signals retry', async () => {
   telemetry._send = async () => { throw new Error('network unavailable'); };
   await assert.rejects(() => telemetry.flushQueue(), /network unavailable/);
   assert.deepEqual(values['sessionsignal.numericTelemetryQueue'].map(item => item.snapshotId), ['one', 'two']);
+});
+
+test('face analyzer stops cleanly and reports frame-processing failures', async () => {
+  let cameraStopped = false;
+  const reportedErrors = [];
+  const { FaceMesh: originalFaceMesh, Camera: originalCamera } = globalThis;
+  globalThis.FaceMesh = class {
+    setOptions() {}
+    onResults() {}
+    async send() { throw new Error('frame processing failed'); }
+  };
+  globalThis.Camera = class {
+    constructor(_video, options) { this.options = options; }
+    async start() { await this.options.onFrame(); }
+    stop() { cameraStopped = true; }
+  };
+
+  const video = { srcObject: null };
+  const analyzer = new FaceAnalyzer(video, { getContext: () => ({}) }, () => {}, {
+    onError: (error) => reportedErrors.push(error)
+  });
+  try {
+    await analyzer.start();
+    assert.equal(cameraStopped, true);
+    assert.equal(analyzer.stopped, true);
+    assert.equal(reportedErrors.length, 1);
+    assert.match(reportedErrors[0].message, /frame processing failed/);
+  } finally {
+    if (originalFaceMesh === undefined) delete globalThis.FaceMesh;
+    else globalThis.FaceMesh = originalFaceMesh;
+    if (originalCamera === undefined) delete globalThis.Camera;
+    else globalThis.Camera = originalCamera;
+  }
 });
