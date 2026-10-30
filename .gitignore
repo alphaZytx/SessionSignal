@@ -26,3 +26,5 @@ apps/api/*.db
 apps/api/**/*.db-journal
 
 notes.txt
+.vercel
+.env*
