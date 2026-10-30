@@ -459,6 +459,10 @@ export class ChartManager {
         const agg = payload.aggregates || {};
         const comp = agg.computed || {};
         const pts = agg.percentages || {};
+        const observable = agg.signalState !== 'unavailable'
+            && payload.signalState !== 'unavailable'
+            && (comp.intervalAttentionScore ?? payload.attentionScore) != null
+            && Number.isFinite(Number(comp.intervalAttentionScore ?? payload.attentionScore));
 
         // Manage global time labels for lines
         const now = new Date();
@@ -474,7 +478,7 @@ export class ChartManager {
         if (this.charts.attention) {
             const ds = this.charts.attention.data.datasets.find(d => d.sId === studentId);
             if (ds) {
-                ds.data.push(comp.intervalAttentionScore !== undefined ? comp.intervalAttentionScore : payload.attentionScore || 0);
+                ds.data.push(observable ? Number(comp.intervalAttentionScore ?? payload.attentionScore) : null);
                 if (ds.data.length > this.maxDataPoints) ds.data.shift();
             }
             this.charts.attention.data.labels = [...this.timeLabels];
@@ -482,7 +486,7 @@ export class ChartManager {
         }
 
         // 2. Emotion Stacked Bar
-        if (this.charts.emotion && agg.emotionDistribution) {
+        if (this.charts.emotion && agg.emotionDistribution && observable) {
             const idx = this.charts.emotion.data.labels.indexOf(name);
             if (idx > -1) {
                 const eDist = agg.emotionDistribution;
@@ -512,12 +516,13 @@ export class ChartManager {
         if (this.charts.gaze) {
             const idx = this.charts.gaze.data.labels.indexOf(name);
             if (idx > -1) {
-                const val = pts.gazeOnScreen !== undefined ? pts.gazeOnScreen : (payload.gazeOnScreen ? 100 : 0);
+                const val = observable ? (pts.gazeOnScreen !== undefined ? pts.gazeOnScreen : (payload.gazeOnScreen ? 100 : 0)) : null;
                 this.charts.gaze.data.datasets[0].data[idx] = val;
                 
-                let bColor = '#ef4444'; // red
-                if (val >= 70) bColor = '#22c55e'; // green
+                let bColor = '#6b7280';
+                if (observable && val >= 70) bColor = '#22c55e'; // green
                 else if (val >= 40) bColor = '#f59e0b'; // amber
+                else if (observable) bColor = '#ef4444';
                 this.charts.gaze.data.datasets[0].backgroundColor[idx] = bColor;
                 
                 this.charts.gaze.update('active');
@@ -528,7 +533,7 @@ export class ChartManager {
         if (this.charts.blink) {
             const idx = this.charts.blink.data.labels.indexOf(name);
             if (idx > -1) {
-                const val = agg.blinkRate?.mean !== undefined ? agg.blinkRate.mean : (payload.blinkRate || 0);
+                const val = observable ? (agg.blinkRate?.mean !== undefined ? agg.blinkRate.mean : (payload.blinkRate || 0)) : null;
                 this.charts.blink.data.datasets[0].data[idx] = val;
                 this.charts.blink.update('active');
             }
@@ -537,7 +542,7 @@ export class ChartManager {
         // 5. Head Pose Radar
         if (this.charts.pose) {
             const ds = this.charts.pose.data.datasets.find(d => d.sId === studentId);
-            if (ds) {
+            if (ds && observable) {
                 const mode =
                     agg.modes?.headPoseCategory ||
                     agg.headPoseCategory?.mode ||
@@ -564,7 +569,7 @@ export class ChartManager {
         if (this.charts.drowsiness) {
             const ds = this.charts.drowsiness.data.datasets.find(d => d.sId === studentId);
             if (ds) {
-                ds.data.push(agg.drowsinessScore?.mean !== undefined ? agg.drowsinessScore.mean : (payload.drowsinessScore || 0));
+                ds.data.push(observable ? (agg.drowsinessScore?.mean !== undefined ? agg.drowsinessScore.mean : (payload.drowsinessScore || 0)) : null);
                 if (ds.data.length > this.maxDataPoints) ds.data.shift();
             }
             this.charts.drowsiness.data.labels = [...this.timeLabels];

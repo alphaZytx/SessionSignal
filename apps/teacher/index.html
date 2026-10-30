@@ -1,210 +1,75 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassPulse - Teacher Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/dashboard.css">
-    
-    <!-- Dependencies -->
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="SessionSignal live facilitator workspace">
+  <title>Live facilitator workspace — SessionSignal</title>
+  <link rel="stylesheet" href="/apps/teacher/css/dashboard.css">
 </head>
 <body class="dashboard-body">
-
-    <!-- TOP NAVIGATION BAR -->
-    <header class="top-nav">
-        <div class="nav-left">
-            <a class="brand-link" href="/">
-                <svg class="brain-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"></path>
-                    <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"></path>
-                    <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"></path>
-                    <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"></path>
-                    <path d="M6.002 6.502L6 6.5"></path>
-                    <path d="M11.88 20a4 4 0 0 1-1.38-1.5"></path>
-                </svg>
-                <span class="app-name">ClassPulse</span>
-            </a>
-        </div>
-        
-        <div class="nav-center">
-            <span class="session-display" id="navSessionCode">Session: ------</span>
-        </div>
-        
-        <div class="nav-right">
-            <div class="status-group">
-                <div class="conn-dot" id="socketStatusDot"></div>
-                <span>Status</span>
-            </div>
-            <div class="status-group ml-3">
-                <span id="navStudentCount">0 online</span>
-            </div>
-            <div class="timer-display ml-3" id="sessionTimer">00:00:00</div>
-            
-            <button class="btn btn-danger hidden ml-3" id="btnEndSession">End Session</button>
-            <button class="btn" id="btnDemoMode" style="background-color: var(--bg-surface-hover); color: var(--color-teal); border: 1px solid var(--border-color); margin-left:12px;">Demo Mode</button>
-            <button class="btn btn-primary ml-2" id="btnStartSession">Start Session</button>
-        </div>
-    </header>
-
-    <!-- MAIN CONTENT AREA -->
-    <div class="main-layout">
-        
-        <!-- LEFT SIDEBAR: Students -->
-        <aside class="sidebar-left">
-            <div class="sidebar-header">
-                <h2>Students</h2>
-            </div>
-            <div class="student-list" id="studentListContainer">
-                <div class="empty-state">No students joined yet.</div>
-                <!-- Student cards will be injected here -->
-            </div>
-        </aside>
-
-        <!-- CENTER MAIN AREA: Charts & Stats -->
-        <main class="center-content">
-            
-            <!-- ROW 1: Overview Cards -->
-            <div class="overview-row">
-                <div class="stat-card">
-                    <h3 class="stat-title">Class Attention</h3>
-                    <div class="stat-value large-value color-green" id="avgAttScore">--</div>
-                    <div class="stat-sub">Average Score</div>
-                </div>
-                <div class="stat-card">
-                    <h3 class="stat-title">Students Focused</h3>
-                    <div class="stat-value" id="focusedCountText">0/0</div>
-                    <div class="stat-sub">Currently Focused</div>
-                </div>
-                <div class="stat-card">
-                    <h3 class="stat-title">Dominant Emotion</h3>
-                    <div class="stat-value emoji-large" id="dominantEmo">😐</div>
-                    <div class="stat-sub" id="dominantEmoLabel">Neutral</div>
-                </div>
-                <div class="stat-card">
-                    <h3 class="stat-title">Active Alerts</h3>
-                    <div class="stat-value color-amber" id="activeAlertsCount">0</div>
-                    <div class="stat-sub">Requires attention</div>
-                </div>
-            </div>
-
-            <!-- ROW 2: Primary Charts -->
-            <div class="charts-row split-50">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Attention Timeline</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="attentionTimeline"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Emotion Distribution</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="emotionDistribution"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ROW 3: Secondary Charts -->
-            <div class="charts-row split-25">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Gaze on Screen %</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="gazeChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Blink Rate (per min)</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="blinkRateChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Head Pose Distribution</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="headPoseChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Drowsiness Timeline</h3>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="drowsinessTimeline"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ROW 4: Detailed Data Table -->
-            <div class="chart-card list-card">
-                <div class="chart-header">
-                    <h3>Detailed Data Feed</h3>
-                </div>
-                <div class="table-container">
-                    <table class="data-table" id="detailsTable">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Attention</th>
-                                <th>Gaze %</th>
-                                <th>Emotion</th>
-                                <th>Drowsiness</th>
-                                <th>Blink/min</th>
-                                <th>Head Pose</th>
-                                <th>Yawns</th>
-                                <th>Alerts</th>
-                                <th>Last Update</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Rows injected here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </main>
-
-        <!-- RIGHT SIDEBAR: Alerts & Tips -->
-        <aside class="sidebar-right">
-            <div class="sidebar-header">
-                <h2>Live Alerts</h2>
-            </div>
-            
-            <div class="alerts-feed" id="alertsContainer">
-                <!-- Alerts injected here -->
-                <div class="empty-state">No active alerts.</div>
-            </div>
-
-            <div class="sidebar-header reco-header">
-                <h2>Recommendations</h2>
-            </div>
-            
-            <div class="recommendations-panel" id="recoContainer">
-                <div class="tip-card">
-                    Start a session to receive real-time teaching recommendations based on class engagement.
-                </div>
-            </div>
-        </aside>
-
+  <a class="dashboard-skip" href="#dashboard-main">Skip to session overview</a>
+  <header class="top-nav">
+    <div class="nav-left">
+      <a class="brand-link" href="/" aria-label="SessionSignal home"><span class="dashboard-brand-mark" aria-hidden="true">SS</span><span class="app-name">SessionSignal</span></a>
+      <span class="workspace-label">Facilitator workspace</span>
     </div>
+    <div class="session-control" aria-label="Current session">
+      <div><span class="control-label">JOINING CODE</span><strong class="session-display" id="navSessionCode">Not started</strong></div>
+      <button class="icon-button hidden" id="btnCopyCode" type="button" title="Copy joining code" aria-label="Copy joining code">Copy</button>
+    </div>
+    <div class="nav-right">
+      <div class="live-status" role="status" aria-live="polite"><span class="conn-dot" id="socketStatusDot"></span><span id="connectionLabel">Connecting</span></div>
+      <span id="navStudentCount">0 online</span><span class="timer-display" id="sessionTimer">00:00:00</span>
+      <div class="nav-actions">
+        <button class="btn btn-danger hidden" id="btnEndSession" type="button">End session</button>
+        <button class="btn btn-secondary" id="btnDemoMode" type="button">Preview data</button>
+        <button class="btn btn-primary" id="btnStartSession" type="button">Start session</button>
+        <a class="btn btn-secondary" href="/facilitator/sessions">History</a>
+        <button class="btn btn-secondary" id="btnSignOut" type="button">Sign out</button>
+      </div>
+    </div>
+  </header>
 
-    <!-- Modals / Overlays (if needed later) -->
-    
-    <!-- Scripts (Will implement logic in part 6) -->
-    <script src="js/dashboard.js" type="module"></script>
+  <div class="main-layout">
+    <aside class="sidebar-left" aria-label="Participants">
+      <div class="sidebar-header"><h2>Participants</h2><span>Live status</span></div>
+      <div class="student-list" id="studentListContainer"><div class="empty-state"><strong>No one has joined yet</strong><span>Start a session, then share the joining code.</span></div></div>
+    </aside>
+
+    <main class="center-content" id="dashboard-main">
+      <section class="overview-row" aria-label="Session overview">
+        <article class="stat-card"><h2 class="stat-title">Observable average</h2><div class="stat-value large-value color-green" id="avgAttScore">—</div><div class="stat-sub">Camera-based estimate</div></article>
+        <article class="stat-card"><h2 class="stat-title">Higher estimates</h2><div class="stat-value" id="focusedCountText">0/0</div><div class="stat-sub">At or above 60</div></article>
+        <article class="stat-card"><h2 class="stat-title">Common state label</h2><div class="stat-value emoji-large" id="dominantEmo">—</div><div class="stat-sub" id="dominantEmoLabel">Unavailable</div></article>
+        <article class="stat-card"><h2 class="stat-title">Signals to review</h2><div class="stat-value color-amber" id="activeAlertsCount">0</div><div class="stat-sub">Not automatic decisions</div></article>
+      </section>
+
+      <section class="charts-row split-50" aria-label="Primary session charts">
+        <article class="chart-card"><div class="chart-header"><h2>Observable estimate over time</h2><span>Missing signal stays missing</span></div><div class="chart-body"><canvas id="attentionTimeline" aria-label="Observable estimate timeline"></canvas></div></article>
+        <article class="chart-card"><div class="chart-header"><h2>Rule-based state labels</h2><span>Heuristic, not detected emotion</span></div><div class="chart-body"><canvas id="emotionDistribution" aria-label="Rule-based state label distribution"></canvas></div></article>
+      </section>
+
+      <section class="charts-row split-25" aria-label="Detailed signal charts">
+        <article class="chart-card"><div class="chart-header"><h2>Approximate gaze %</h2></div><div class="chart-body"><canvas id="gazeChart"></canvas></div></article>
+        <article class="chart-card"><div class="chart-header"><h2>Blink rate / min</h2></div><div class="chart-body"><canvas id="blinkRateChart"></canvas></div></article>
+        <article class="chart-card"><div class="chart-header"><h2>Head-pose estimate</h2></div><div class="chart-body"><canvas id="headPoseChart"></canvas></div></article>
+        <article class="chart-card"><div class="chart-header"><h2>Drowsiness heuristic</h2></div><div class="chart-body"><canvas id="drowsinessTimeline"></canvas></div></article>
+      </section>
+
+      <section class="chart-card list-card">
+        <div class="chart-header"><h2>Participant detail</h2><span>Latest numerical summary</span></div>
+        <div class="table-container"><table class="data-table" id="detailsTable"><thead><tr><th>Participant</th><th>Estimate</th><th>Gaze %</th><th>State label</th><th>Drowsiness</th><th>Blink/min</th><th>Head pose</th><th>Yawns</th><th>Flags</th><th>Last update</th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </main>
+
+    <aside class="sidebar-right" aria-label="Facilitator prompts">
+      <div class="sidebar-header"><h2>Signals to review</h2><span>Most recent first</span></div>
+      <div class="alerts-feed" id="alertsContainer"><div class="empty-state"><strong>No current flags</strong><span>Threshold events will appear here.</span></div></div>
+      <div class="sidebar-header reco-header"><h2>Facilitator prompts</h2><span>Use your judgement</span></div>
+      <div class="recommendations-panel" id="recoContainer"><div class="tip-card">Start a session to see transparent, rule-based check-in suggestions.</div></div>
+    </aside>
+  </div>
+  <script src="/apps/teacher/js/dashboard.js" type="module"></script>
 </body>
 </html>

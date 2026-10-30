@@ -1,17 +1,37 @@
 {
-  "name": "classpulse-monorepo",
+  "name": "sessionsignal-monorepo",
   "version": "0.2.0",
   "private": true,
-  "description": "Student Attention Monitoring System monorepo (API + clients + control hub)",
+  "type": "module",
+  "description": "SessionSignal public website, teacher portal, Chrome extension, and Supabase migrations",
   "scripts": {
-    "dev:api": "npm run dev --prefix apps/api",
-    "start:api": "npm run start --prefix apps/api",
-    "install:api": "npm install --prefix apps/api",
-    "setup": "npm run install:api",
-    "dev": "npm run dev:api",
-    "start": "npm run start:api"
+    "dev": "vite",
+    "build": "npm run build:extension && npm run package:extension && vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/**/*.test.js",
+    "check": "npm run test && npm run build && npm run scan:production",
+    "build:extension": "node scripts/build-extension.mjs",
+    "package:extension": "node scripts/package-extension.mjs",
+    "migrate:sqlite": "node scripts/migrate-sqlite-to-supabase.mjs",
+    "scan:production": "node scripts/scan-production.mjs",
+    "legacy:dev": "npm run dev --prefix apps/api",
+    "legacy:start": "npm run start --prefix apps/api",
+    "legacy:setup": "npm install --prefix apps/api"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/face_mesh": "^0.4.1633559619",
+    "@supabase/supabase-js": "^2.118.0",
+    "chart.js": "^4.6.1",
+    "chartjs-plugin-annotation": "^3.1.0",
+    "chartjs-plugin-datalabels": "^2.2.0"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "better-sqlite3": "^12.11.1",
+    "vite": "^7.3.7"
   }
 }

@@ -50,8 +50,8 @@ joinForm?.addEventListener('submit', (event) => {
     return;
   }
   try {
-    localStorage.setItem('classpulseStudentName', name);
-    localStorage.setItem('classpulseSessionCode', session);
+    localStorage.setItem('sessionsignalStudentName', name);
+    localStorage.setItem('sessionsignalSessionCode', session);
   } catch (error) {
     console.warn('Unable to persist student info', error);
   }

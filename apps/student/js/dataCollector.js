@@ -95,22 +95,25 @@ export class DataCollector {
         }
 
         const count = frames.length;
+        const observableFrames = frames.filter(f => f.faceDetected && Number.isFinite(f.attentionScore));
+        const signalState = observableFrames.length === 0 ? 'unavailable' : 'observable';
+        const analysisFrames = signalState === 'observable' ? observableFrames : frames;
 
         // Extract arrays
         // Extract arrays
-        const faceConfs = frames.map(f => f.faceConfidence || 0.99);
-        const attScores = frames.map(f => f.attentionScore || 0);
-        const gazeDevs = frames.map(f => f.gazeDeviation || 0);
-        const gazeXs = frames.map(f => f.gazeX || 0);
-        const gazeYs = frames.map(f => f.gazeY || 0);
-        const pitch = frames.map(f => f.headPosePitch || 0);
-        const yaw = frames.map(f => f.headPoseYaw || 0);
-        const roll = frames.map(f => f.headPoseRoll || 0);
-        const eyeL = frames.map(f => f.eyeOpennessLeft || 0);
-        const eyeR = frames.map(f => f.eyeOpennessRight || 0);
-        const blinkRates = frames.map(f => f.blinkRate || 0);
-        const mouthOps = frames.map(f => f.mouthOpenness || 0);
-        const drowsyMs = frames.map(f => f.drowsinessScore || 0);
+        const faceConfs = observableFrames.map(f => f.faceConfidence).filter(Number.isFinite);
+        const attScores = observableFrames.map(f => f.attentionScore);
+        const gazeDevs = analysisFrames.map(f => f.gazeDeviation || 0);
+        const gazeXs = analysisFrames.map(f => f.gazeX || 0);
+        const gazeYs = analysisFrames.map(f => f.gazeY || 0);
+        const pitch = analysisFrames.map(f => f.headPosePitch || 0);
+        const yaw = analysisFrames.map(f => f.headPoseYaw || 0);
+        const roll = analysisFrames.map(f => f.headPoseRoll || 0);
+        const eyeL = analysisFrames.map(f => f.eyeOpennessLeft || 0);
+        const eyeR = analysisFrames.map(f => f.eyeOpennessRight || 0);
+        const blinkRates = analysisFrames.map(f => f.blinkRate || 0);
+        const mouthOps = analysisFrames.map(f => f.mouthOpenness || 0);
+        const drowsyMs = analysisFrames.map(f => f.drowsinessScore || 0);
 
         // Numeric stats calculation
         const statFaceConf = this._calcStats(faceConfs);
@@ -134,9 +137,9 @@ export class DataCollector {
         const yawnDetected = frames.some(f => f.yawnDetected);
 
         // Categoricals (mode)
-        const headModes = frames.map(f => f.headPoseCategory || 'forward');
-        const attModes = frames.map(f => f.attentionCategory || 'neutral');
-        const emoModes = frames.map(f => f.emotion || 'neutral');
+        const headModes = observableFrames.map(f => f.headPoseCategory || 'forward');
+        const attModes = observableFrames.map(f => f.attentionCategory || 'neutral');
+        const emoModes = observableFrames.map(f => f.emotion || 'neutral');
         
         const modeHeadPose = this._calcMode(headModes);
         const modeAttention = this._calcMode(attModes);
@@ -144,36 +147,40 @@ export class DataCollector {
 
         // Emotion Distribution
         const emotionDist = { focused: 0, confused: 0, bored: 0, engaged: 0, distracted: 0, drowsy: 0, neutral: 0 };
-        frames.forEach(f => {
+        observableFrames.forEach(f => {
             const e = f.emotion || 'neutral';
             if (emotionDist[e] !== undefined) emotionDist[e]++;
         });
-        for (const k in emotionDist) emotionDist[k] = parseFloat(((emotionDist[k] / count) * 100).toFixed(1));
+        const emotionDenominator = observableFrames.length || 1;
+        for (const k in emotionDist) emotionDist[k] = parseFloat(((emotionDist[k] / emotionDenominator) * 100).toFixed(1));
 
         // Derived interval metrics
-        const intervalAttentionScore = Math.round(statAttention.mean);
+        const intervalAttentionScore = signalState === 'observable' ? Math.round(statAttention.mean) : null;
         let attentionTrendLabel = 'stable';
         if (statAttention.trend > 0.5) attentionTrendLabel = 'improving';
         else if (statAttention.trend < -0.5) attentionTrendLabel = 'declining';
         
         let alertFlags = [];
-        if (pctGaze < 40 && pctFace > 0) alertFlags.push("GAZE_OFF");
-        if (modeHeadPose !== 'forward') alertFlags.push("HEAD_TURNED");
-        if (statDrowsy.mean > 0.5) alertFlags.push("DROWSY");
-        if (yawnDetected) alertFlags.push("YAWNING");
-        if (intervalAttentionScore < 35) alertFlags.push("HIGH_DISTRACTION");
-        if (statBlink.mean < 8 && intervalAttentionScore < 60) alertFlags.push("LOW_BLINK"); // Add condition to prevent flagging deep focus as an alert
-        if (pctEyesClosed > 20) alertFlags.push("EYES_CLOSED");
+        if (signalState === 'observable') {
+            if (pctGaze < 40 && pctFace > 0) alertFlags.push("GAZE_OFF");
+            if (modeHeadPose !== 'forward') alertFlags.push("HEAD_TURNED");
+            if (statDrowsy.mean > 0.5) alertFlags.push("DROWSY");
+            if (yawnDetected) alertFlags.push("YAWNING");
+            if (intervalAttentionScore < 35) alertFlags.push("HIGH_DISTRACTION");
+            if (statBlink.mean < 8 && intervalAttentionScore < 60) alertFlags.push("LOW_BLINK");
+            if (pctEyesClosed > 20) alertFlags.push("EYES_CLOSED");
+        }
 
         // Aggregated payload
         const aggregatedPayload = {
+            signalState,
             timing: {
                 frameCount: count,
                 intervalDurationMs: duration,
                 intervalStartTime: this.intervalStartTime,
                 intervalEndTime: intervalEndTime
             },
-            faceConfidence: { mean: statFaceConf.mean },
+            faceConfidence: { mean: faceConfs.length ? statFaceConf.mean : null },
             attentionScore: statAttention,
             gazeDeviation: { mean: statGazeDev.mean, max: statGazeDev.max },
             gazeX: { mean: statGazeX.mean },
@@ -214,8 +221,8 @@ export class DataCollector {
 
         // --- Update Session Summary ---
         this.totalIntervals++;
-        this.sumAttentionScores += intervalAttentionScore;
-        this.attentionTimeline.push({ timestamp: intervalEndTime, score: intervalAttentionScore });
+        if (intervalAttentionScore !== null) this.sumAttentionScores += intervalAttentionScore;
+        this.attentionTimeline.push({ timestamp: intervalEndTime, score: intervalAttentionScore, signalState });
         this.emotionTimeline.push({ timestamp: intervalEndTime, emotion: modeEmotion });
         
         alertFlags.forEach(flag => {
@@ -228,7 +235,9 @@ export class DataCollector {
         this.totalAwayTime += durationSec * ((100 - pctFace) / 100);
         const presentSec = durationSec * (pctFace / 100);
         
-        if (intervalAttentionScore >= 60) {
+        if (intervalAttentionScore === null) {
+            // An unavailable interval contributes to away time, not a low score.
+        } else if (intervalAttentionScore >= 60) {
             this.totalFocusedTime += presentSec;
             if (intervalAttentionScore > this.peakAttention.score) {
                 this.peakAttention = { start: this.intervalStartTime, end: intervalEndTime, score: intervalAttentionScore };
@@ -252,7 +261,9 @@ export class DataCollector {
         return {
             totalIntervals: this.totalIntervals,
             totalFrames: this.totalFrames,
-            overallAttentionScore: this.totalIntervals > 0 ? parseFloat((this.sumAttentionScores / this.totalIntervals).toFixed(1)) : 0,
+            overallAttentionScore: this.attentionTimeline.some(p => p.score !== null)
+                ? parseFloat((this.sumAttentionScores / this.attentionTimeline.filter(p => p.score !== null).length).toFixed(1))
+                : null,
             attentionTimeline: this.attentionTimeline,
             emotionTimeline: this.emotionTimeline,
             totalAlerts: this.alertCounts,

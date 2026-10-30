@@ -6,7 +6,7 @@
 
 ## 1. What Is This Project?
 
-This is **ClassPulse** — a **Student Attention Monitoring System** that uses the student's own webcam combined with **Google MediaPipe FaceMesh** (a computer-vision AI model) to detect whether students are paying attention during a live class. It runs **entirely in the browser** — no video is ever uploaded to any server. Only numerical attention metrics (scores, gaze percentages, emotion labels) are transmitted in real-time to the teacher's dashboard via **WebSockets (Socket.io)**.
+This is **SessionSignal** — a **Student Attention Monitoring System** that uses the student's own webcam combined with **Google MediaPipe FaceMesh** (a computer-vision AI model) to detect whether students are paying attention during a live class. It runs **entirely in the browser** — no video is ever uploaded to any server. Only numerical attention metrics (scores, gaze percentages, emotion labels) are transmitted in real-time to the teacher's dashboard via **WebSockets (Socket.io)**.
 
 ### Core Design Philosophy
 
@@ -57,7 +57,7 @@ Student-Attention-Monitoring-System/
 
 ```json
 {
-  "name": "classpulse-monorepo",
+  "name": "sessionsignal-monorepo",
   "version": "0.2.0",
   "private": true,
   "scripts": {
@@ -92,13 +92,13 @@ Student-Attention-Monitoring-System/
 PORT=3000
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8888,http://localhost:3000
 SESSION_DATABASE_PATH=data/sessions.db
-SUPABASE_URL=https://zmvuoivimocvijnmzmnh.supabase.co
-SUPABASE_ANON_KEY=eyJhbGci...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
-SUPABASE_JWT_SECRET=53a0b0c3-...
-SUPABASE_PROJECT_ID=zmvuoivimocvijnmzmnh
-HUB_TITLE=ClassPulse Control Hub
-HUB_SUPPORT_EMAIL=ops@classpulse.local
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_ANON_KEY=REPLACE_WITH_PUBLIC_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=REPLACE_WITH_SERVER_ONLY_KEY
+SUPABASE_JWT_SECRET=REPLACE_WITH_SERVER_ONLY_SECRET
+SUPABASE_PROJECT_ID=YOUR_PROJECT
+HUB_TITLE=SessionSignal Control Hub
+HUB_SUPPORT_EMAIL=ops@sessionsignal.local
 ```
 
 **Why each variable exists:**

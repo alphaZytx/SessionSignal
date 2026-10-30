@@ -1,5 +1,5 @@
 {
-  "name": "@classpulse/api",
+  "name": "@sessionsignal/api",
   "version": "0.2.0",
   "description": "Backend server for Student Attention Monitoring System",
   "main": "server.js",

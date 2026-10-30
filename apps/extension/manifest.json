@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "SessionSignal Participant Beta",
+  "description": "Local-first participation indicators for a facilitator-led live session.",
+  "version": "0.3.0",
+  "minimum_chrome_version": "116",
+  "permissions": ["sidePanel", "storage"],
+  "host_permissions": ["https://*.supabase.co/*"],
+  "action": {
+    "default_title": "Open SessionSignal",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "side_panel": {
+    "default_path": "student.html?mode=sidepanel"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co"
+  }
+}

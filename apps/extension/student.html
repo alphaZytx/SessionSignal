@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SessionSignal Participant</title>
+  <link rel="stylesheet" href="styles/student.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><span aria-hidden="true">SS</span><strong>SessionSignal</strong></div>
+    <div id="topStatus" class="status-pill" data-state="idle" role="status" aria-live="polite">Not monitoring</div>
+  </header>
+  <main>
+    <section id="joinView" class="view">
+      <div class="step-label">Step 1 of 3 · Join</div>
+      <span class="eyebrow">Participant companion</span>
+      <h1>Join a live session.</h1>
+      <p class="lead">Enter the name you want your facilitator to see and the six-character code they shared. Camera access is not requested yet.</p>
+      <form id="joinForm" class="panel">
+        <label for="displayName">Display name<input id="displayName" name="displayName" maxlength="80" autocomplete="name" required></label>
+        <label for="sessionCode">Session code<input id="sessionCode" name="sessionCode" maxlength="6" minlength="6" pattern="[A-Za-z0-9]{6}" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" required aria-describedby="codeHint"></label>
+        <p id="codeHint" class="field-hint">Six letters or numbers. Spaces are removed automatically.</p>
+        <button type="submit">Check code and continue</button>
+        <p id="joinMessage" class="message" role="status" aria-live="polite"></p>
+      </form>
+      <p class="privacy-short"><strong>Your choice:</strong> joining validates the code only. Monitoring begins only after you review the next screen and press Start.</p>
+    </section>
+
+    <section id="consentView" class="view" hidden>
+      <div class="step-label">Step 2 of 3 · Review</div>
+      <span class="eyebrow">Before the camera starts</span>
+      <h1>Know exactly what is shared.</h1>
+      <p class="lead">SessionSignal uses its own camera permission even when your Meet or Zoom camera is off. Device support for using both at once can vary.</p>
+      <div class="notice-grid">
+        <article><span class="notice-icon local" aria-hidden="true">01</span><strong>Processed on this device</strong><p>Camera frames are analysed in this active extension page by MediaPipe and transparent heuristic rules.</p></article>
+        <article><span class="notice-icon shared" aria-hidden="true">02</span><strong>Shared with the facilitator</strong><p>Your display name, session status, timestamps, and five-second numerical summaries.</p></article>
+        <article><span class="notice-icon never" aria-hidden="true">03</span><strong>Never uploaded</strong><p>Raw frames, video, screenshots, canvas images, face crops, embeddings, landmarks, or audio.</p></article>
+        <article><span class="notice-icon limits" aria-hidden="true">04</span><strong>Indicators have limits</strong><p>These estimates are not proof of attention, emotion, learning, intent, attendance, or mental state.</p></article>
+      </div>
+      <label class="consent-check"><input id="consentCheck" type="checkbox"><span>I understand what is processed and shared, and I choose to start SessionSignal monitoring.</span></label>
+      <div class="actions"><button id="startMonitoring" disabled>Start camera analysis</button><button id="cancelJoin" class="secondary">Back</button></div>
+      <p id="cameraMessage" class="message" role="alert" aria-live="assertive"></p>
+    </section>
+
+    <section id="monitorView" class="view monitor" hidden>
+      <div class="monitor-top">
+        <div><div class="step-label">Step 3 of 3 · Active</div><span class="eyebrow">Local camera analysis</span><h1 id="monitorName">Participant</h1><p>Session <strong id="monitorCode">------</strong> · <span id="syncText">Preparing first numerical update…</span></p></div>
+        <button id="stopMonitoring" class="danger">Stop and release camera</button>
+      </div>
+      <div class="monitor-grid">
+        <div class="camera-card">
+          <div class="camera-wrap"><video id="videoElement" playsinline muted aria-label="Local mirrored camera preview"></video><canvas id="overlayCanvas" width="640" height="480" aria-hidden="true"></canvas><div class="camera-active"><span></span> Camera analysis active</div></div>
+          <p class="local-badge">This preview stays on your device</p>
+          <div class="signal-row"><span>Face signal</span><strong id="faceSignal">Waiting</strong></div>
+          <div class="signal-row"><span>Approximate gaze</span><strong id="gazeSignal">—</strong></div>
+          <div class="signal-row"><span>Rule-based state</span><strong id="emotionSignal">—</strong></div>
+        </div>
+        <div class="metrics" aria-label="Local numerical indicators">
+          <article><span>Attention estimate</span><strong id="attentionMetric">—</strong><small>Observable frames only</small></article>
+          <article><span>Blink estimate</span><strong id="blinkMetric">—</strong><small>Per minute</small></article>
+          <article><span>Eye openness</span><strong id="eyeMetric">—</strong><small>Approximate</small></article>
+          <article><span>Head pose</span><strong id="poseMetric">—</strong><small>Pitch / yaw / roll</small></article>
+          <article><span>Observable streak</span><strong id="streakMetric">—</strong><small>Local session</small></article>
+          <article><span>Signal state</span><strong id="stateMetric">Waiting</strong><small>Unknown is never zero</small></article>
+          <div class="chart-card"><div class="chart-heading"><strong>Recent observable estimate</strong><span>Last five minutes</span></div><canvas id="attentionChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="terminalView" class="view terminal" hidden>
+      <div class="terminal-mark" aria-hidden="true">✓</div>
+      <span class="eyebrow">Camera released</span>
+      <h1 id="terminalTitle">Monitoring stopped</h1>
+      <p id="terminalMessage" class="lead">Your camera and local analysis have stopped.</p>
+      <button id="returnToJoin">Join another session</button>
+    </section>
+  </main>
+  <script src="config.js"></script>
+  <script src="vendor/supabase/supabase.js"></script>
+  <script src="vendor/chart/chart.umd.js"></script>
+  <script src="vendor/mediapipe/face_mesh.js"></script>
+  <script src="vendor/mediapipe/camera_utils.js"></script>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

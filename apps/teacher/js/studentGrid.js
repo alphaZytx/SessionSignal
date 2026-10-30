@@ -26,17 +26,24 @@ export class StudentGrid {
         return map[emo] || '😐';
     }
 
+    _escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>'"]/g, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        })[char]);
+    }
+
     addStudent(studentId, name, color) {
         if (this.students.has(studentId)) return;
 
-        const initials = this.getInitials(name);
+        const initials = this._escapeHtml(this.getInitials(name));
+        const safeName = this._escapeHtml(name);
         
         // 1. Create Sidebar Card HTML
         const cardHTML = `
             <div class="student-card" data-student-id="${studentId}" style="border-left: 4px solid ${color}">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
                     <div style="width: 32px; height: 32px; border-radius: 50%; background: ${color}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">${initials}</div>
-                    <div style="flex: 1; font-weight: 600;">${name}</div>
+                    <div style="flex: 1; font-weight: 600;">${safeName}</div>
                     <div class="status-dot" id="dot-${studentId}" style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-green);"></div>
                 </div>
                 
@@ -51,7 +58,7 @@ export class StudentGrid {
                 
                 <div style="display: flex; gap: 6px; margin-bottom: 12px; font-size: 12px; color: var(--text-secondary);">
                     <span id="emo-ico-${studentId}">😐</span>
-                    <span id="emo-lbl-${studentId}">Neutral</span>
+                    <span id="emo-lbl-${studentId}">State unavailable</span>
                 </div>
                 
                 <div style="display: flex; gap: 6px; margin-bottom: 12px;">
@@ -64,7 +71,7 @@ export class StudentGrid {
                 </div>
                 
                 <div id="alert-row-${studentId}" style="display: none; background: rgba(239, 68, 68, 0.1); color: var(--color-red); padding: 6px; border-radius: 4px; font-size: 11px; margin-bottom: 12px;">
-                    <span style="font-weight: bold;">! <span id="alert-count-${studentId}">0</span> Alerts</span>
+                    <span style="font-weight: bold;">! <span id="alert-count-${studentId}">0</span> flags</span>
                 </div>
                 
                 <div style="font-size: 10px; color: var(--text-secondary); text-align: right;" id="time-${studentId}">
@@ -79,7 +86,7 @@ export class StudentGrid {
                 <td>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <div style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></div>
-                        <span>${name}</span>
+                        <span>${safeName}</span>
                     </div>
                 </td>
                 <td id="tbl-score-${studentId}" style="font-weight: 600;">--</td>
@@ -127,7 +134,10 @@ export class StudentGrid {
         const comp = agg.computed || {};
         const pts = agg.percentages || {};
 
-        const score = comp.intervalAttentionScore !== undefined ? comp.intervalAttentionScore : payload.attentionScore;
+        const scoreValue = comp.intervalAttentionScore !== undefined ? comp.intervalAttentionScore : payload.attentionScore;
+        const signalUnavailable = agg.signalState === 'unavailable' || payload.signalState === 'unavailable'
+            || scoreValue == null || !Number.isFinite(Number(scoreValue));
+        const score = signalUnavailable ? null : Math.max(0, Math.min(100, Number(scoreValue)));
         const emo = agg.modes?.emotion || payload.emotion || 'neutral';
         const blink = agg.blinkRate?.mean || payload.blinkRate || 0;
         const gaze = pts.gazeOnScreen !== undefined ? pts.gazeOnScreen : (payload.gazeOnScreen ? 100 : 0);
@@ -138,11 +148,12 @@ export class StudentGrid {
         // Color coding
         let sColor = 'var(--text-primary)';
         let bgBadge = 'rgba(139, 148, 158, 0.2)';
-        let catText = 'Neutral';
+        let catText = 'Mixed estimate';
 
-        if (score >= 60) { sColor = 'var(--color-green)'; bgBadge = 'rgba(34, 197, 94, 0.2)'; catText = score >= 80 ? 'Highly Focused' : 'Focused'; }
-        else if (score >= 40) { sColor = 'var(--color-amber)'; bgBadge = 'rgba(245, 158, 11, 0.2)'; catText = 'Neutral'; }
-        else { sColor = 'var(--color-red)'; bgBadge = 'rgba(239, 68, 68, 0.2)'; catText = score >= 20 ? 'Distracted' : 'Disengaged'; }
+        if (signalUnavailable) { catText = 'Signal unavailable'; }
+        else if (score >= 60) { sColor = 'var(--color-green)'; bgBadge = 'rgba(34, 197, 94, 0.2)'; catText = score >= 80 ? 'Higher estimate' : 'Steady estimate'; }
+        else if (score >= 40) { sColor = 'var(--color-amber)'; bgBadge = 'rgba(245, 158, 11, 0.2)'; catText = 'Mixed estimate'; }
+        else { sColor = 'var(--color-red)'; bgBadge = 'rgba(239, 68, 68, 0.2)'; catText = score >= 20 ? 'Lower estimate' : 'Very low estimate'; }
 
         // --- UPDATE CARD ---
         const elScore = document.getElementById(`score-${studentId}`);
@@ -157,7 +168,8 @@ export class StudentGrid {
         const elSpark = document.getElementById(`spark-${studentId}`);
         
         if (elScore) {
-            this._animateNumber(elScore, parseInt(elScore.innerText) || 0, score, 300);
+            if (signalUnavailable) elScore.innerText = '—';
+            else this._animateNumber(elScore, parseInt(elScore.innerText) || 0, score, 300);
             elScore.style.color = sColor;
         }
         if (elBadge) {
@@ -166,16 +178,16 @@ export class StudentGrid {
             elBadge.style.color = sColor;
         }
         if (elBar) {
-            elBar.style.width = `${score}%`;
+            elBar.style.width = signalUnavailable ? '0%' : `${score}%`;
             elBar.style.background = sColor;
         }
         if (elGaze) elGaze.innerText = `Gaze ${Math.round(gaze)}%`;
         if (elBlink) elBlink.innerText = `Blink ${Math.round(blink)}/m`;
         if (elEmoIco) elEmoIco.innerText = this._getEmotionEmoji(emo);
-        if (elEmoLbl) elEmoLbl.innerText = emo.charAt(0).toUpperCase() + emo.slice(1);
+        if (elEmoLbl) elEmoLbl.innerText = `State: ${emo.charAt(0).toUpperCase() + emo.slice(1)}`;
 
         // Sparkline queue logic
-        student.sparkQueue.push(score);
+        student.sparkQueue.push(signalUnavailable ? null : score);
         student.sparkQueue.shift();
         
         if (elSpark) {
@@ -202,7 +214,7 @@ export class StudentGrid {
                 card.style.borderColor = 'var(--color-red)';
                 setTimeout(() => {
                     card.style.transition = 'border-color 0.3s ease';
-                    card.style.borderColor = (score <= 30) ? 'var(--color-red)' : ((score <= 50) ? 'var(--color-amber)' : 'var(--border-color)');
+                    card.style.borderColor = signalUnavailable ? 'var(--border-color)' : ((score <= 30) ? 'var(--color-red)' : ((score <= 50) ? 'var(--color-amber)' : 'var(--border-color)'));
                 }, 400);
             }
         } else {
@@ -222,7 +234,7 @@ export class StudentGrid {
         const tTime = document.getElementById(`tbl-time-${studentId}`);
 
         if (tScore) {
-            tScore.innerText = score;
+            tScore.innerText = signalUnavailable ? '—' : Math.round(score);
             tScore.style.color = sColor;
         }
         if (tGaze) tGaze.innerText = `${Math.round(gaze)}%`;

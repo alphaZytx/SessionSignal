@@ -1,3 +1,7 @@
+import '../../web/src/lib/chartSetup.js';
+import { requireTeacher } from '../../web/src/auth/teacherGuard.js';
+import { loadSessionAnalytics } from './analyticsRepository.js';
+
 // Analytics logic for the post-session deep dive page
 
 // Chart.js global defaults for Dark Theme
@@ -36,8 +40,13 @@ let activeStudentId = null;
 // Chart Instances
 let cBar = null, cScatter = null, cTimeline = null;
 let sTimeline = null, sPie = null, sGaze = null, sPose = null, sBlink = null, sDrowsy = null;
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+})[char]);
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const identity = await requireTeacher();
+    if (!identity) return;
     if (!SESSION_ID) {
         document.body.innerHTML = "<h2 style='padding:40px;text-align:center;'>No Session ID provided in URL.</h2>";
         return;
@@ -60,16 +69,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadSessionData() {
-    // 1. Fetch Class Summary
-    const sumRes = await fetch(`http://localhost:3000/api/sessions/${SESSION_ID}/summary`);
-    const sumJson = await sumRes.json();
-    if (!sumJson.success) throw new Error(sumJson.error);
-    classSummaryData = sumJson.data;
-
-    // Fetch session metadata from another API to get duration/dates if needed
-    const sessRes = await fetch(`http://localhost:3000/api/sessions`);
-    const sessJson = await sessRes.json();
-    const sessionMeta = (sessJson.data || []).find(s => s.id === SESSION_ID);
+    const result = await loadSessionAnalytics(SESSION_ID);
+    classSummaryData = result.summary;
+    allStudentSnaps = result.snapshotsByStudent;
+    const sessionMeta = result.session;
     
     if (sessionMeta) {
         classSummaryData.meta = sessionMeta;
@@ -80,17 +83,9 @@ async function loadSessionData() {
         document.getElementById('valDuration').innerText = dur;
     }
 
-    // 2. Fetch Snapshots for all students
     classSummaryData.studentSummaries.forEach((s, idx) => {
         s.color = PALETTE[idx % PALETTE.length];
     });
-
-    const fetches = classSummaryData.studentSummaries.map(s => 
-        fetch(`http://localhost:3000/api/sessions/${SESSION_ID}/snapshots/${s.studentId}`)
-            .then(r => r.json())
-            .then(j => allStudentSnaps[s.studentId] = j.data)
-    );
-    await Promise.all(fetches);
 }
 
 // FORMATTERS
@@ -106,7 +101,7 @@ function formatDuration(ms) {
 // --- SECTION 1 ---
 function renderOverview() {
     const s = classSummaryData;
-    document.getElementById('valAvgAtt').innerText = `${s.classAvgAttention}%`;
+    document.getElementById('valAvgAtt').innerText = s.classAvgAttention == null ? '—' : `${s.classAvgAttention}%`;
     document.getElementById('valTotalStudents').innerText = s.studentSummaries.length;
     
     let totalAlerts = 0;
@@ -115,6 +110,7 @@ function renderOverview() {
 
     let maxA = -1, minA = 101, maxS = null, minS = null;
     s.studentSummaries.forEach(stu => {
+        if (!Number.isFinite(stu.avgAttention)) return;
         if (stu.avgAttention > maxA) { maxA = stu.avgAttention; maxS = stu; }
         if (stu.avgAttention < minA) { minA = stu.avgAttention; minS = stu; }
     });
@@ -177,7 +173,11 @@ function buildHeatmap() {
     // Rows for each student
     classSummaryData.studentSummaries.forEach(stu => {
         // Label
-        container.insertAdjacentHTML('beforeend', `<div style="font-size:12px; font-weight:500; text-align:right; padding-right:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${stu.name}">${stu.name}</div>`);
+        const studentLabel = document.createElement('div');
+        studentLabel.style.cssText = 'font-size:12px; font-weight:500; text-align:right; padding-right:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+        studentLabel.title = stu.name;
+        studentLabel.textContent = stu.name;
+        container.appendChild(studentLabel);
         
         // Map snaps to columns
         const snaps = allStudentSnaps[stu.studentId];
@@ -187,9 +187,11 @@ function buildHeatmap() {
             const idx = Math.floor((snap.timestamp - minTime) / INTERVAL);
             if (idx >= 0 && idx < NUM_COLS) {
                 colMap[idx] = snap;
-                const score = (snap.attention_score ?? snap.interval_attention_score) ?? 0;
-                classAvgMap[idx].sum += score;
-                classAvgMap[idx].count++;
+                const score = snap.signal_state === 'unavailable' ? null : (snap.attention_score ?? snap.interval_attention_score);
+                if (Number.isFinite(score)) {
+                    classAvgMap[idx].sum += score;
+                    classAvgMap[idx].count++;
+                }
             }
         });
 
@@ -201,7 +203,7 @@ function buildHeatmap() {
             div.style.borderRadius = '2px';
             
             if (snap) {
-                const score = (snap.attention_score ?? snap.interval_attention_score) ?? 0;
+                const score = snap.signal_state === 'unavailable' ? null : (snap.attention_score ?? snap.interval_attention_score);
                 div.style.backgroundColor = getColor(score);
                 
                 div.onmouseenter = (e) => {
@@ -209,7 +211,7 @@ function buildHeatmap() {
                     const emo = snap.primary_emotion || 'neutral';
                     const gaze = Math.round(snap.gaze_on_screen_pct || 0);
                     const drowsy = (snap.drowsiness_score || 0).toFixed(2);
-                    tooltip.innerHTML = `Time: ${t} | Attention: ${score} | Emotion: ${emo} | Gaze: ${gaze}% | Drowsy: ${drowsy}`;
+                    tooltip.textContent = `Time: ${t} | Estimate: ${score ?? 'unavailable'} | State label: ${emo} | Gaze: ${gaze}% | Drowsiness: ${drowsy}`;
                     tooltip.style.display = 'block';
                     tooltip.style.left = e.pageX + 10 + 'px';
                     tooltip.style.top = e.pageY + 10 + 'px';
@@ -223,7 +225,7 @@ function buildHeatmap() {
     });
 
     // Class Average Row
-    container.insertAdjacentHTML('beforeend', `<div style="font-size:12px; font-weight:600; color:var(--text-primary); text-align:right; padding-right:8px; margin-top:4px;">Class Average</div>`);
+    container.insertAdjacentHTML('beforeend', `<div style="font-size:12px; font-weight:600; color:var(--text-primary); text-align:right; padding-right:8px; margin-top:4px;">Session average</div>`);
     for (let c = 0; c < NUM_COLS; c++) {
         const div = document.createElement('div');
         div.style.width = '100%'; div.style.height = '20px';
@@ -272,13 +274,14 @@ function buildComparativeCharts() {
         let totalYawns = 0, totalBlinks = 0, totalDrowsy = 0, totalAtt = 0, totalGaze = 0, count = 0;
         let focusedIntervals = 0;
         const snaps = allStudentSnaps[s.studentId] || [];
-        snaps.forEach(sn => {
+        const observableSnaps = snaps.filter(sn => sn.signal_state !== 'unavailable' && Number.isFinite(sn.attention_score ?? sn.interval_attention_score));
+        observableSnaps.forEach(sn => {
             if (sn.yawn_detected) totalYawns++;
             totalBlinks += (sn.blink_rate || 0);
             totalDrowsy += (sn.drowsiness_score || 0);
-            totalAtt += ((sn.attention_score ?? sn.interval_attention_score) ?? 0);
+            totalAtt += (sn.attention_score ?? sn.interval_attention_score);
             totalGaze += (sn.gaze_on_screen_pct || 0);
-            const attNow = ((sn.attention_score ?? sn.interval_attention_score) ?? 0);
+            const attNow = (sn.attention_score ?? sn.interval_attention_score);
             if (attNow >= 60) focusedIntervals++;
             count++;
         });
@@ -341,7 +344,7 @@ function buildComparativeCharts() {
                             if (metric === 'Blink Rate') return `Blink Rate: ${actualVal} (normalized: ${normVal})`;
                             return `Yawn Count: ${actualVal} (normalized: ${normVal})`;
                         },
-                        afterLabel: (ctx) => `Student: ${ctx.dataset.label}`
+                        afterLabel: (ctx) => `Participant: ${ctx.dataset.label}`
                     }
                 }
             },
@@ -353,7 +356,7 @@ function buildComparativeCharts() {
 
     // Scatter
     const ctxScatter = document.getElementById('compScatterChart');
-    const scatterData = students.map((s, i) => ({
+    const scatterData = students.filter(s => Number.isFinite(s.avgAttention) && Number.isFinite(s.avgGaze)).map((s) => ({
         x: s.avgGaze, y: s.avgAttention,
         name: s.name, color: s.color, r: 8
     }));
@@ -383,7 +386,10 @@ function buildComparativeCharts() {
         return {
             label: s.name,
             borderColor: s.color, borderWidth: 1.5, fill: false, tension: 0.3, pointRadius: 0,
-            data: snaps.map(sn => ({ x: sn.timestamp, y: sn.interval_attention_score || 0 }))
+            data: snaps.map(sn => ({
+                x: sn.timestamp,
+                y: sn.signal_state === 'unavailable' ? null : sn.interval_attention_score
+            }))
         };
     });
     
@@ -410,7 +416,9 @@ function buildTabs() {
     classSummaryData.studentSummaries.forEach((s, idx) => {
         const btn = document.createElement('button');
         btn.className = `tab-btn ${idx === 0 ? 'active' : ''}`;
-        btn.innerHTML = `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${s.color}; margin-right:6px;"></span>${s.name}`;
+        const colorDot = document.createElement('span');
+        colorDot.style.cssText = `display:inline-block; width:10px; height:10px; border-radius:50%; background:${s.color}; margin-right:6px;`;
+        btn.append(colorDot, document.createTextNode(s.name));
         
         btn.onclick = () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -478,7 +486,7 @@ function buildStudentCharts(studentId) {
             plugins: {
                 datalabels: { display: false },
                 legend: { position: 'right' },
-                centerText: { display: true, text: 'Emotion' },
+                centerText: { display: true, text: 'State label' },
                 tooltip: {
                     callbacks: {
                         label: c => {
@@ -573,13 +581,13 @@ function populateStudentTab(studentId) {
     document.getElementById('printStudentName').innerText = `Report for ${s.name}`;
 
     // CARDS
-    document.getElementById('sdScore').innerText = s.avgAttention;
+    document.getElementById('sdScore').innerText = s.avgAttention ?? '—';
     
     // Quick calc stats from snaps
     let maxStreak = 0, curStreak = 0;
     let totalYawns = 0;
     snaps.forEach(sn => {
-        if ((sn.interval_attention_score||0) >= 60) { curStreak += (sn.interval_duration_ms||5000); if(curStreak > maxStreak) maxStreak = curStreak; } 
+        if (sn.signal_state !== 'unavailable' && Number.isFinite(sn.interval_attention_score) && sn.interval_attention_score >= 60) { curStreak += (sn.interval_duration_ms||5000); if(curStreak > maxStreak) maxStreak = curStreak; }
         else curStreak = 0;
         if (sn.yawn_detected) totalYawns++;
     });
@@ -587,9 +595,11 @@ function populateStudentTab(studentId) {
     const fmtMins = ms => (ms/60000).toFixed(1) + 'm';
     
     // Focus calculation: focusPct * duration, roughly estimated by snaps
-    const durMs = snaps.length * 5000;
-    document.getElementById('sdFocusTime').innerText = fmtMins(durMs * (s.focusPct/100));
-    document.getElementById('sdDistTime').innerText = fmtMins(durMs * (s.distractedPct/100));
+    const durMs = snaps
+        .filter(sn => sn.signal_state !== 'unavailable' && Number.isFinite(sn.interval_attention_score))
+        .reduce((sum, sn) => sum + (sn.interval_duration_ms || 5000), 0);
+    document.getElementById('sdFocusTime').innerText = s.focusPct == null ? '—' : fmtMins(durMs * (s.focusPct/100));
+    document.getElementById('sdDistTime').innerText = s.distractedPct == null ? '—' : fmtMins(durMs * (s.distractedPct/100));
     document.getElementById('sdStreak').innerText = fmtMins(maxStreak);
     document.getElementById('sdYawns').innerText = totalYawns;
 
@@ -601,7 +611,7 @@ function populateStudentTab(studentId) {
     sTimeline.data = {
         labels,
         datasets: [{
-            data: snaps.map(sn => (sn.attention_score ?? sn.interval_attention_score) ?? 0),
+            data: snaps.map(sn => sn.signal_state === 'unavailable' ? null : (sn.attention_score ?? sn.interval_attention_score)),
             borderColor: s.color,
             backgroundColor: s.color + '33',
             fill: false,
@@ -614,7 +624,8 @@ function populateStudentTab(studentId) {
     // Pie
     const EMO_KEYS = ['focused', 'engaged', 'neutral', 'confused', 'bored', 'distracted', 'drowsy'];
     const emoAvg = Object.fromEntries(EMO_KEYS.map(k => [k, 0]));
-    snaps.forEach(sn => {
+    const observableSnaps = snaps.filter(sn => sn.signal_state !== 'unavailable');
+    observableSnaps.forEach(sn => {
         emoAvg.focused += (sn.emotion_focused_pct || 0);
         emoAvg.engaged += (sn.emotion_engaged_pct || 0);
         emoAvg.neutral += (sn.emotion_neutral_pct || 0);
@@ -623,7 +634,7 @@ function populateStudentTab(studentId) {
         emoAvg.distracted += (sn.emotion_distracted_pct || 0);
         emoAvg.drowsy += (sn.emotion_drowsy_pct || 0);
     });
-    const denom = Math.max(1, snaps.length);
+    const denom = Math.max(1, observableSnaps.length);
     EMO_KEYS.forEach(k => emoAvg[k] = emoAvg[k] / denom);
     // Normalize to sum 100 in case backend stores partial/rounded values
     const emoSum = EMO_KEYS.reduce((a, k) => a + emoAvg[k], 0);
@@ -632,7 +643,7 @@ function populateStudentTab(studentId) {
 
     let domEmo = 'neutral', domPct = -1;
     EMO_KEYS.forEach(k => { if (emoAvg[k] > domPct) { domPct = emoAvg[k]; domEmo = k; } });
-    const totalSessionMinutes = (snaps.length * 5) / 60;
+    const totalSessionMinutes = (observableSnaps.length * 5) / 60;
     sPie.options.plugins.centerText.totalSessionMinutes = totalSessionMinutes;
     sPie.options.plugins.centerText.text = `${domEmo.charAt(0).toUpperCase() + domEmo.slice(1)} ${domPct.toFixed(0)}%`;
     sPie.data = {
@@ -649,7 +660,7 @@ function populateStudentTab(studentId) {
     sGaze.data = {
         labels,
         datasets: [{
-            data: snaps.map(sn => sn.gaze_on_screen_pct || 0),
+            data: snaps.map(sn => sn.signal_state === 'unavailable' ? null : sn.gaze_on_screen_pct),
             borderColor: '#14b8a6',
             backgroundColor: 'rgba(20,184,166,0.2)',
             fill: true,
@@ -662,8 +673,8 @@ function populateStudentTab(studentId) {
     // Pose 
     // Aggregate poses first
     const pCounts = { forward: 0, looking_down: 0, looking_left: 0, looking_right: 0, tilted: 0, looking_up: 0 };
-    snaps.forEach(sn => { pCounts[sn.head_pose_category || 'forward'] = (pCounts[sn.head_pose_category || 'forward'] || 0) + 1; });
-    const tot = Math.max(1, snaps.length);
+    observableSnaps.forEach(sn => { pCounts[sn.head_pose_category || 'forward'] = (pCounts[sn.head_pose_category || 'forward'] || 0) + 1; });
+    const tot = Math.max(1, observableSnaps.length);
     const HEAD_POSE_LABELS = ['Forward', 'Looking Down', 'Looking Left', 'Looking Right', 'Tilted', 'Looking Up'];
     const HEAD_KEYS = ['forward', 'looking_down', 'looking_left', 'looking_right', 'tilted', 'looking_up'];
     const HEAD_COLORS = { forward: '#22c55e', looking_down: '#f97316', looking_left: '#3b82f6', looking_right: '#a855f7', tilted: '#eab308', looking_up: '#6b7280' };
@@ -684,7 +695,7 @@ function populateStudentTab(studentId) {
     sBlink.data = {
         labels,
         datasets: [{
-            data: snaps.map(sn => sn.blink_rate || 0),
+            data: snaps.map(sn => sn.signal_state === 'unavailable' ? null : sn.blink_rate),
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59,130,246,0.12)',
             tension: 0.3,
@@ -698,7 +709,7 @@ function populateStudentTab(studentId) {
     sDrowsy.data = {
         labels,
         datasets: [{
-            data: snaps.map(sn => sn.drowsiness_score || 0),
+            data: snaps.map(sn => sn.signal_state === 'unavailable' ? null : sn.drowsiness_score),
             borderColor: '#a855f7',
             backgroundColor: 'rgba(168,85,247,0.2)',
             fill: true,
@@ -712,18 +723,19 @@ function populateStudentTab(studentId) {
     const tb = document.querySelector('#sdTable tbody');
     tb.innerHTML = '';
     [...snaps].reverse().forEach(sn => {
-        const sc = sn.interval_attention_score||0;
-        let cClass = sc >= 60 ? 'color-green' : (sc >= 40 ? 'color-amber' : 'color-red');
+        const sc = sn.signal_state === 'unavailable' ? null : sn.interval_attention_score;
+        const unavailable = sn.signal_state === 'unavailable';
+        let cClass = sc == null ? '' : (sc >= 60 ? 'color-green' : (sc >= 40 ? 'color-amber' : 'color-red'));
         const tr = `
             <tr>
                 <td>${new Date(sn.timestamp).toLocaleTimeString()}</td>
-                <td class="${cClass}" style="font-weight:bold">${sc}</td>
-                <td>${sn.primary_emotion}</td>
-                <td>${Math.round(sn.gaze_on_screen_pct||0)}%</td>
-                <td>${(sn.head_pose_category||'').replace('_',' ')}</td>
-                <td>${Math.round(sn.blink_rate||0)}</td>
-                <td>${(sn.drowsiness_score||0).toFixed(2)}</td>
-                <td>${Math.round(sn.eye_openness_mean||0 * 100)}%</td>
+                <td class="${cClass}" style="font-weight:bold">${sc ?? '—'}</td>
+                <td>${unavailable ? '—' : sn.primary_emotion}</td>
+                <td>${unavailable ? '—' : `${Math.round(sn.gaze_on_screen_pct || 0)}%`}</td>
+                <td>${unavailable ? '—' : (sn.head_pose_category||'').replace('_',' ')}</td>
+                <td>${unavailable ? '—' : Math.round(sn.blink_rate || 0)}</td>
+                <td>${unavailable ? '—' : (sn.drowsiness_score || 0).toFixed(2)}</td>
+                <td>${unavailable ? '—' : `${Math.round((sn.eye_openness_mean || 0) * 100)}%`}</td>
                 <td style="color:var(--color-red)">${sn.alert_flags ? sn.alert_flags.split(',').length : 0}</td>
             </tr>
         `;
@@ -735,15 +747,17 @@ function populateStudentTab(studentId) {
     ul.innerHTML = '';
     let peakSc = -1, peakTm = null, dipSc = 101, dipTm = null;
     snaps.forEach(sn => {
-        const t = sn.interval_attention_score||0;
+        const t = sn.signal_state === 'unavailable' ? null : sn.interval_attention_score;
+        if (!Number.isFinite(t)) return;
         if(t > peakSc) { peakSc = t; peakTm = sn.timestamp; }
         if(t < dipSc && t < 40) { dipSc = t; dipTm = sn.timestamp; }
     });
     
-    ul.innerHTML += `<li>Peak focus reached at ${new Date(peakTm).toLocaleTimeString()} with a score of ${peakSc}.</li>`;
+    if (peakTm) ul.innerHTML += `<li>Peak focus reached at ${new Date(peakTm).toLocaleTimeString()} with a score of ${peakSc}.</li>`;
+    else ul.innerHTML += '<li>No observable attention samples were available for this student.</li>';
     if (dipTm) ul.innerHTML += `<li>Attention dropped significantly around ${new Date(dipTm).toLocaleTimeString()} (score ${dipSc}) — consider reviewing that segment.</li>`;
-    if (totalYawns > 0) ul.innerHTML += `<li>${s.name} had ${totalYawns} yawns detected — may benefit from a break reminder and checking engagement methods.</li>`;
-    if (s.awayPct > 10) ul.innerHTML += `<li>Face was not detected for ${s.awayPct}% of the session — follow up to ensure they are remaining at their station.</li>`;
+    if (totalYawns > 0) ul.innerHTML += `<li>${escapeHtml(s.name)} had ${totalYawns} yawns detected — may benefit from a break reminder and checking engagement methods.</li>`;
+    if (s.signalUnavailablePct > 10) ul.innerHTML += `<li>Camera signal was unavailable for ${s.signalUnavailablePct}% of samples. This is unknown data, not a low-attention result; check camera position, lighting, or permission if needed.</li>`;
     ul.innerHTML += `<li>Blink rate averaged ${s.avgBlink || 'normal range'} over the session.</li>`;
 }
 
@@ -753,26 +767,27 @@ function generateClassReport() {
     const s = classSummaryData;
     
     let report = `
-        <p><strong>Session Quality:</strong> The session experienced an overall average class attention of <strong>${s.classAvgAttention}%</strong>. 
-        There were a total of ${s.studentSummaries.length} participating students and ${Object.keys(s.alertsByType||{}).length > 0 ? 'several alert events recorded' : 'no critical alerts triggered'}.</p>
+        <p><strong>Session overview:</strong> The observable-sample session estimate averaged <strong>${s.classAvgAttention == null ? 'unavailable' : `${s.classAvgAttention}%`}</strong>.
+        There were ${s.studentSummaries.length} participants and ${Object.keys(s.alertsByType||{}).length > 0 ? 'several threshold flags recorded' : 'no threshold flags recorded'}.</p>
         
-        <p><strong>Engagement Patterns:</strong> The dominant emotion displayed across the session was <strong>${(s.classEmotionDistribution && Object.keys(s.classEmotionDistribution).length > 0) ? Object.keys(s.classEmotionDistribution).reduce((a,b)=>s.classEmotionDistribution[a] > s.classEmotionDistribution[b] ? a : b) : 'neutral'}</strong>.
+        <p><strong>Observed patterns:</strong> The most frequent rule-based state label was <strong>${(s.classEmotionDistribution && Object.keys(s.classEmotionDistribution).length > 0) ? Object.keys(s.classEmotionDistribution).reduce((a,b)=>s.classEmotionDistribution[a] > s.classEmotionDistribution[b] ? a : b) : 'neutral'}</strong>.
         Analysis of the attention timeline indicates that engagement fluctuated over the total duration.</p>
         
-        <p><strong>Suggestions:</strong> Consider incorporating structured breaks if drowsiness spikes were observed towards the mid-point of the class. For students consistently dropping below the 40% focus threshold, consider deploying direct check-in mechanisms or interactive polls during the lesson.</p>
+        <p><strong>Suggestions:</strong> Consider a structured break if drowsiness heuristics rise. If a participant's estimate is repeatedly below 40, use a voluntary check-in or interactive prompt to gather real context. These indicators are estimates and must not be used alone for high-stakes decisions.</p>
     `;
     box.innerHTML = report;
 }
 
 function exportStudentCsv() {
-    if (!activeStudentId || !allStudentSnaps[activeStudentId]) { alert("No student selected."); return; }
+    if (!activeStudentId || !allStudentSnaps[activeStudentId]) { alert("No participant selected."); return; }
     
     const snaps = allStudentSnaps[activeStudentId];
     const s = classSummaryData.studentSummaries.find(x => x.studentId === activeStudentId);
     
-    let csv = "Timestamp,Time,AttentionScore,Emotion,GazePct,HeadPose,BlinkRate,DrowsyScore,Alerts\n";
+    let csv = "Timestamp,Time,SignalState,ObservableEstimate,RuleBasedStateLabel,GazePct,HeadPose,BlinkRate,DrowsinessHeuristic,Flags\n";
     snaps.forEach(sn => {
-        csv += `${sn.timestamp},${new Date(sn.timestamp).toLocaleTimeString()},${sn.interval_attention_score||0},${sn.primary_emotion},${Math.round(sn.gaze_on_screen_pct||0)},${sn.head_pose_category||''},${Math.round(sn.blink_rate||0)},${(sn.drowsiness_score||0).toFixed(2)},"${sn.alert_flags||''}"\n`;
+        const unavailable = sn.signal_state === 'unavailable';
+        csv += `${sn.timestamp},${new Date(sn.timestamp).toLocaleTimeString()},${sn.signal_state},${unavailable ? '' : (sn.interval_attention_score ?? '')},${unavailable ? '' : sn.primary_emotion},${unavailable ? '' : Math.round(sn.gaze_on_screen_pct || 0)},${unavailable ? '' : (sn.head_pose_category || '')},${unavailable ? '' : Math.round(sn.blink_rate || 0)},${unavailable ? '' : (sn.drowsiness_score || 0).toFixed(2)},"${sn.alert_flags || ''}"\n`;
     });
     
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -781,4 +796,5 @@ function exportStudentCsv() {
     a.setAttribute('href', url);
     a.setAttribute('download', `${s.name.replace(/\s/g,'_')}_session_export.csv`);
     a.click();
+    setTimeout(() => window.URL.revokeObjectURL(url), 0);
 }

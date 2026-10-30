@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Install the SessionSignal beta extension</title>
+  <link rel="stylesheet" href="/apps/web/src/styles/site.css">
+</head>
+<body>
+  <div data-site-header></div>
+  <main id="main-content">
+    <header class="page-hero">
+      <span class="eyebrow">Controlled beta</span>
+      <h1>Install SessionSignal in Chrome Developer Mode.</h1>
+      <p class="page-lead">The download extracts into one clearly named SessionSignal folder with a START_HERE guide. You select the whole folder in Chrome—no command line and no setup scripts.</p>
+      <div class="hero-actions">
+        <a id="extensionDownload" class="button" href="/downloads/sessionsignal-extension-beta.zip" download>Download beta ZIP</a>
+        <a class="button button-quiet" href="/downloads/RELEASE_NOTES.md">Release notes</a>
+      </div>
+    </header>
+    <section class="section">
+      <div class="section-inner prose">
+        <div class="status-note"><strong>Beta 0.3.0:</strong> the ZIP is generated reproducibly from the extension build output. Advanced users can verify it with the published <a href="/downloads/sessionsignal-extension-beta-0.3.0.zip.sha256">SHA-256 checksum</a>. If a download is unavailable in a preview deployment, the owner must run <code>npm run package:extension</code> and redeploy the generated artifact.</div>
+        <ol class="install-steps">
+          <li><span><strong>Download</strong> the SessionSignal beta ZIP from this page.</span></li>
+          <li><span><strong>Extract the ZIP.</strong> It creates one folder named <code>SessionSignal Beta 0.3.0</code>. Double-click <code>START_HERE.html</code> if you want the instructions beside you.</span></li>
+          <li><span>In Google Chrome, enter <code>chrome://extensions</code> in the address bar and enable <strong>Developer mode</strong>.</span></li>
+          <li><span>Click <strong>Load unpacked</strong> and select the entire <code>SessionSignal Beta 0.3.0</code> folder. Do not select an individual file.</span></li>
+          <li><span>Pin SessionSignal, click its icon, and choose <strong>Open Side Panel</strong> or <strong>Open in New Tab</strong>.</span></li>
+        </ol>
+        <div class="status-note"><strong>Why is extraction required?</strong> Chrome does not allow a downloaded ZIP to run directly. This five-step Developer Mode process is the simplest safe beta installation. A future Chrome Web Store release can provide one-click installation.</div>
+        <h2>Updating the beta</h2>
+        <p>Remove the old SessionSignal extension in <code>chrome://extensions</code>, download and extract the new ZIP, then load the newly extracted SessionSignal folder. Unpacked extensions do not update automatically like Chrome Web Store extensions.</p>
+        <h2>Before the session</h2>
+        <p>Confirm Chrome is current, your webcam is available, and the facilitator has given you an active six-character code. Meet, Zoom, or Teams camera access and SessionSignal access are separate; simultaneous access depends on your device and operating system.</p>
+      </div>
+    </section>
+  </main>
+  <div data-site-footer></div>
+  <script type="module" src="/apps/web/src/marketing/site.js"></script>
+</body>
+</html>

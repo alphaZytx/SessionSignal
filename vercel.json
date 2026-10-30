@@ -1,0 +1,38 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/web",
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/teachers", "destination": "/facilitators", "permanent": true },
+    { "source": "/teachers/login", "destination": "/facilitators/login", "permanent": true },
+    { "source": "/students", "destination": "/participants", "permanent": true },
+    { "source": "/students/install", "destination": "/participants/install", "permanent": true },
+    { "source": "/teacher", "destination": "/facilitator", "permanent": true },
+    { "source": "/teacher/analytics", "destination": "/facilitator/analytics", "permanent": true },
+    { "source": "/teacher/sessions", "destination": "/facilitator/sessions", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/", "destination": "/apps/web/index.html" },
+    { "source": "/features", "destination": "/apps/web/features/index.html" },
+    { "source": "/how-it-works", "destination": "/apps/web/how-it-works/index.html" },
+    { "source": "/facilitators", "destination": "/apps/web/teachers/index.html" },
+    { "source": "/facilitators/login", "destination": "/apps/web/teachers/login/index.html" },
+    { "source": "/participants", "destination": "/apps/web/students/index.html" },
+    { "source": "/participants/install", "destination": "/apps/web/students/install/index.html" },
+    { "source": "/privacy", "destination": "/apps/web/privacy/index.html" },
+    { "source": "/contact", "destination": "/apps/web/contact/index.html" },
+    { "source": "/facilitator", "destination": "/apps/teacher/index.html" },
+    { "source": "/facilitator/analytics", "destination": "/apps/teacher/analytics.html" },
+    { "source": "/facilitator/sessions", "destination": "/apps/teacher/sessions.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}

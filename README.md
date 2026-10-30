@@ -1,206 +1,178 @@
-<p align="center">
-  <h1 align="center">ClassPulse — Student Attention Monitoring System</h1>
-  <p align="center">
-    <strong>Real-time AI-powered attention tracking for modern classrooms</strong>
-  </p>
-  <p align="center">
-    <a href="#features">Features</a> •
-    <a href="#screenshots">Screenshots</a> •
-    <a href="#quick-start">Quick Start</a> •
-    <a href="#architecture">Architecture</a> •
-    <a href="#tech-stack">Tech Stack</a>
-  </p>
-</p>
+# SessionSignal
 
----
+SessionSignal is a local-first participation-indicator companion for live classes, workshops, training, coaching, and other online sessions. Facilitators use an authenticated web portal; participants use a Chrome Manifest V3 extension beside Google Meet, Zoom, Teams, or another session website.
 
-## About
+Webcam frames are processed locally in the active extension document. SessionSignal sends only derived five-second numerical telemetry, identifiers, timestamps, status, and the participant's chosen display name. It does not upload raw frames, images, video, screenshots, face crops, embeddings, or audio.
 
-**ClassPulse** is a comprehensive student attention monitoring system that uses computer vision and AI to track student engagement in real-time during live classes. Teachers get a rich analytics dashboard while students simply join with a name and session code — their webcam feed is analyzed locally for attention score, emotion, gaze direction, blink rate, head pose, and drowsiness.
+SessionSignal outputs are heuristic estimates—not verified measurements of attention, learning, emotion, intent, attendance, or mental state. They must not be used as the sole basis for grades, discipline, or other high-stakes decisions.
 
-The system is designed as a monorepo containing four applications: a **Control Hub** (landing page), a **Student Client** (capture & monitoring), a **Teacher Dashboard** (analytics & alerts), and a **REST + WebSocket API** that ties everything together.
+## Product architecture
 
----
+```text
+Public website + authenticated facilitator portal (Vite/Vercel)
+                         │
+                         ├── Supabase Auth (provisioned facilitators)
+                         ├── PostgreSQL + RLS (sessions and history)
+                         └── private Realtime Broadcast (live updates)
+                         │
+Chrome extension ────────┘
+  Side Panel or New Tab
+  anonymous Supabase identity
+  local MediaPipe analysis
+  five-second numerical aggregation
+```
 
-## Features
+Normal production operation does not require the legacy Express/Socket.IO server.
 
-| Category | Highlights |
-|---|---|
-| **AI-Powered Analysis** | Real-time face detection, gaze tracking, emotion recognition, blink rate monitoring, head pose estimation, and drowsiness detection |
-| **Teacher Dashboard** | Live attention timeline, emotion distribution charts, gaze & blink analytics, head pose visualization, drowsiness tracking, and smart alerts |
-| **Student Client** | Webcam-based face mesh tracking, live attention score, engagement level, focus streaks, and attention-over-time graphs |
-| **Live Alerts** | Instant notifications for head turns, low blinks, drowsiness, and other attention events |
-| **Smart Recommendations** | AI-generated class-level engagement recommendations for teachers |
-| **Real-time Sync** | Socket.IO-powered live data transmission between students and teacher |
-| **Control Hub** | Beautiful landing page with system readiness checks, live pulse stats, and role-based navigation |
+## Repository
 
----
+```text
+apps/web/          public product pages, teacher login, shared web libraries
+apps/teacher/      preserved live dashboard, charts, grid, and historical reports
+apps/extension/    Chrome MV3 launcher and shared student application
+apps/student/      retained attention engine/collector source used by extension build
+apps/api/          retained legacy SQLite server for migration verification only
+supabase/          versioned schema, functions, RLS, and Realtime authorization
+scripts/           extension packaging, migration, and production scans
+tests/             scoring, privacy/security contract, and build integrity tests
+```
 
-## Screenshots
+See `new_idea_implementation.md` for the product specification and `IMPLEMENTATION_CHECKLIST.md` for migration status.
 
-### Control Hub — Landing Page
-The central entry point with live system stats, role-based navigation for Teachers, Students, and Admins, and a modern dark-themed UI.
+## Prerequisites
 
-<p align="center">
-  <img src="docs/screenshots/landing-page.png" alt="ClassPulse Landing Page" width="100%"/>
-</p>
+- Node.js 20.19 or newer
+- npm
+- Google Chrome 116+ for programmatic Side Panel opening
+- A development Supabase project or local Supabase stack
 
----
-
-### Teacher Dashboard — Live Session Monitoring
-A comprehensive real-time analytics dashboard showing class attention scores, attention timeline, emotion distribution, gaze tracking, blink rate analysis, head pose distribution, drowsiness monitoring, live alerts feed, and AI-powered recommendations.
-
-<p align="center">
-  <img src="docs/screenshots/teacher-dashboard.png" alt="Teacher Dashboard" width="100%"/>
-</p>
-
----
-
-### Student Client — Real-time Attention Tracking
-The student-facing interface with live webcam face mesh overlay, attention score, engagement level, emotion detection, gaze status, blink rate, eye openness, head pose tracking, focus streak counter, and an attention-over-time graph.
-
-<p align="center">
-  <img src="docs/screenshots/student-monitoring.png" alt="Student Monitoring Interface" width="100%"/>
-</p>
-
----
-
-### Student Join — Session Entry
-A clean, minimal interface for students to join a live class session by entering their name and the teacher-provided 6-character session code.
-
-<p align="center">
-  <img src="docs/screenshots/student-join.png" alt="Student Join Session" width="100%"/>
-</p>
-
----
-
-## Quick Start
-
-### Prerequisites
-- **Node.js** v20+ 
-- **npm** v9+
-
-### Installation & Run
+## Local web development
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/alphaZytx/Student-Attention-Monitoring-System.git
-cd Student-Attention-Monitoring-System
-
-# 2. Install dependencies
-npm run setup               # Installs API dependencies
-
-# 3. Start the development server
-npm run dev                 # API + Socket server on http://localhost:3000
+npm install
+cp .env.example .env.local
+# Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY
+npm run dev
 ```
 
-### Access the Application
+Open `http://127.0.0.1:5173/`. Canonical routes include `/features`, `/facilitators/login`, `/facilitator`, `/facilitator/sessions`, `/participants/install`, and `/privacy`. The previous teacher/student URLs permanently redirect in production and remain local compatibility aliases.
 
-| Application | URL | Description |
-|---|---|---|
-| **Control Hub** | http://localhost:3000/ | Landing page & navigation |
-| **Student Client** | http://localhost:3000/student | Join a session & start monitoring |
-| **Teacher Dashboard** | http://localhost:3000/teacher | Create sessions & view analytics |
+Facilitator routes redirect to `/facilitators/login` unless Supabase Auth has a valid user whose trusted database role is `teacher`. The internal role name is intentionally retained for existing-data compatibility.
 
-> **Tip:** Use `npm run start` for a production-style boot without the Node file watcher.
+## Supabase setup
 
----
+1. Create a development project (keep production separate).
+2. Copy the project URL and publishable key into `.env.local`.
+3. Apply every file in `supabase/migrations/` in filename order, including the foundation and SessionSignal reliability migration.
+4. Enable Anonymous Sign-Ins for the student extension.
+5. Configure CAPTCHA/Turnstile and review Auth rate limits before public use.
+6. Disable public Realtime channels if the project is dedicated to SessionSignal; SessionSignal subscriptions are private.
+7. Create the teacher Auth user through a trusted dashboard/admin process and provision the matching profile using `scripts/provision-teacher.sql`.
+8. Verify RLS and private-topic access with separate teacher A, teacher B, anonymous student, and unauthenticated clients.
+9. Schedule `public.delete_expired_sessionsignal_data()` only after confirming the retention policy. New sessions default to a 180-day retention date.
 
-## Architecture
+Detailed owner steps are in `docs/SUPABASE_SETUP.md`. Never expose `sb_secret_...` or a legacy service-role key in browser code, extension files, Vercel public variables, or Git.
 
-### Directory Structure
+## Chrome extension
 
-```
-Student-Attention-Monitoring-System/
-├── apps/
-│   ├── api/          → Node/Express real-time + REST API (SQLite)
-│   ├── student/      → Lightweight webcam capture client
-│   ├── teacher/      → Analytics dashboard with rich visualizations
-│   └── hub/          → Central landing/login surface
-├── docs/
-│   └── screenshots/  → Application screenshots
-├── .env              → Runtime configuration
-└── package.json      → Monorepo scripts & metadata
+Build the unpacked extension:
+
+```bash
+npm run build:extension
 ```
 
-### How It Works
+The output is `dist/extension/`. Load that folder using `chrome://extensions` → Developer mode → Load unpacked.
 
-```
-┌─────────────────┐         WebSocket          ┌─────────────────────┐
-│  Student Client  │ ◄──────────────────────► │    API Server        │
-│  (Browser + AI)  │    attention data stream   │  (Express + Socket) │
-│                  │                            │                     │
-│ • Face Detection │                            │ • Session mgmt      │
-│ • Gaze Tracking  │                            │ • Data aggregation   │
-│ • Emotion AI     │                            │ • SQLite persistence │
-│ • Blink Rate     │                            │ • REST endpoints     │
-│ • Head Pose      │                            │                     │
-└─────────────────┘                            └──────────┬──────────┘
-                                                          │
-                                                   WebSocket + REST
-                                                          │
-                                               ┌──────────▼──────────┐
-                                               │  Teacher Dashboard   │
-                                               │                     │
-                                               │ • Attention Timeline │
-                                               │ • Emotion Charts     │
-                                               │ • Gaze & Blink Stats │
-                                               │ • Drowsiness Monitor │
-                                               │ • Live Alerts        │
-                                               │ • Recommendations    │
-                                               └─────────────────────┘
+Package a deterministic beta release:
+
+```bash
+npm run package:extension
 ```
 
----
+This creates:
 
-## Environment Variables
+- `apps/web/public/downloads/sessionsignal-extension-beta-0.3.0.zip`
+- stable download alias `sessionsignal-extension-beta.zip`
+- SHA-256 checksum
+- release notes
 
-| Variable | Description |
-|---|---|
-| `PORT` | API port (default `3000`) |
-| `CORS_ALLOWED_ORIGINS` | Comma-delimited allowed origins |
-| `SESSION_DATABASE_PATH` | Optional override for SQLite DB; defaults to `apps/api/data/sessions.db` |
-| `HUB_TITLE` | Optional Control Hub branding title |
-| `HUB_SUPPORT_EMAIL` | Optional support email for the Hub |
+The ZIP extracts into one versioned folder named `SessionSignal Beta <version>`. Participants can open `START_HERE.html` for a three-step guide, then select that entire folder in Chrome's **Load unpacked** dialog. They never need to understand the internal files. The build copies the existing `faceAnalyzer.js` and `dataCollector.js` into one shared extension application; Side Panel and New Tab do not have separate monitoring engines.
 
----
+The extension build reads `EXTENSION_SUPABASE_URL` and `EXTENSION_SUPABASE_PUBLISHABLE_KEY` (falling back to the `VITE_` equivalents). Placeholder configuration shows a setup error and cannot join a class; it never falls back to a mock backend.
 
-## Health Check
+## Build and tests
 
-- **`/api/health`** — Lightweight endpoint used by the Hub to verify uptime.
-- The Hub status widget pings `/api/health`, `/teacher`, and `/student` so you can quickly verify that all services are running.
+```bash
+npm test
+npm run build
+npm run scan:production
+npm run check
+```
 
----
+`npm run build` packages the extension first so the website download is never a missing link, then builds all public and teacher routes into `dist/web/`.
 
-## Roadmap
+Automated coverage currently checks:
 
-- [ ] Multi-class support with concurrent session management
-- [ ] Historical analytics and session replay
-- [ ] User authentication and role management
-- [ ] Cloud deployment support
-- [ ] Add CI (GitHub Actions) for linting and automated builds
+- observable scoring aggregation and unavailable-signal semantics;
+- absence of raw-media fields in telemetry transport;
+- minimal extension permissions and locally packaged scripts;
+- RLS/ownership/session-end requirements in the migration;
+- production teacher source no longer calling localhost REST or Socket.IO;
+- required page/route entry points.
 
----
+Camera, Chrome lifecycle, real Supabase RLS, Realtime delivery, and cross-network behavior require the manual matrix in `docs/MANUAL_TEST_PLAN.md`.
 
-## Tech Stack
+## Historical SQLite migration
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | HTML5, CSS3, Vanilla JavaScript |
-| **AI/ML** | MediaPipe Face Mesh, TensorFlow.js |
-| **Charts** | Chart.js, Plotly.js |
-| **Backend** | Node.js, Express.js |
-| **Real-time** | Socket.IO |
-| **Database** | SQLite (better-sqlite3) |
+The original SQLite database remains at `apps/api/data/sessions.db` and is ignored by Git. A consistent pre-migration backup was made as `sessions.pre-supabase-migration-20261030.db`.
 
----
+Dry run:
 
-## License
+```bash
+npm run migrate:sqlite -- --dry-run
+```
 
-This project is open source and available for educational and research purposes.
+Apply only after provisioning the explicit owner teacher UUID and setting server-only migration credentials:
 
----
+```bash
+SUPABASE_URL=... \
+SUPABASE_SECRET_KEY=sb_secret_... \
+LEGACY_TEACHER_ID=<provisioned-teacher-uuid> \
+npm run migrate:sqlite -- --apply
+```
 
-<p align="center">
-  Made with care for better classrooms
-</p>
+The importer opens SQLite read-only, uses deterministic destination IDs for idempotent reruns, preserves metric/timestamp values, labels legacy/demo records, and reports source/destination counts. Never use the secret key in frontend or extension configuration.
+
+See `docs/MIGRATION_VERIFICATION.md` before removing any legacy database path.
+
+## Vercel deployment
+
+`vercel.json` sets the build/output configuration and rewrites all public and teacher routes. Configure only:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- optional `VITE_SUPPORT_EMAIL`
+- the matching `EXTENSION_` public values for the beta build
+
+Configure preview and production values separately. Do not configure a secret key as a `VITE_` or `EXTENSION_` variable.
+
+This repository has not been deployed from this environment; deployment requires the project owner's Supabase and Vercel access.
+
+## Legacy local server
+
+The old server is intentionally retained until Supabase data import and representative reports are verified:
+
+```bash
+npm run legacy:setup
+npm run legacy:dev
+```
+
+It is not part of the production build or normal MVP architecture. Its unauthenticated endpoints and in-memory active-session state are unsuitable for production.
+
+## More documentation
+
+- `docs/SUPABASE_SETUP.md` — migrations, Auth, teacher provisioning, Realtime, retention
+- `docs/MANUAL_TEST_PLAN.md` — required browser, privacy, RLS, and cross-location validation
+- `docs/MIGRATION_VERIFICATION.md` — SQLite counts, import, and report comparison
+- `docs/CLEANUP_REPORT.md` — retired and intentionally retained legacy files
+- `about_this_project.md` — current architecture and future-change handoff

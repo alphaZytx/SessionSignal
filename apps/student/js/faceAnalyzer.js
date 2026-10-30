@@ -1,14 +1,15 @@
 export class FaceAnalyzer {
-    constructor(videoElement, canvasElement, onDataCallback) {
+    constructor(videoElement, canvasElement, onDataCallback, options = {}) {
         this.videoElement = videoElement;
         this.canvasElement = canvasElement;
         this.canvasCtx = canvasElement.getContext('2d');
         this.onDataCallback = onDataCallback;
 
         // Initialize MediaPipe FaceMesh
+        const assetBase = options.assetBase || globalThis.SESSIONSIGNAL_MEDIAPIPE_ASSET_BASE || 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/';
         this.faceMesh = new FaceMesh({
             locateFile: (file) => {
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+                return `${assetBase}${file}`;
             }
         });
 
@@ -68,6 +69,10 @@ export class FaceAnalyzer {
         if (this.camera) {
             this.camera.stop();
         }
+        const stream = this.videoElement?.srcObject;
+        if (stream?.getTracks) stream.getTracks().forEach(track => track.stop());
+        if (this.videoElement) this.videoElement.srcObject = null;
+        this.currentMetrics = { faceDetected: false, attentionScore: null, attentionCategory: 'unavailable' };
     }
 
     onResults(results) {
@@ -95,7 +100,9 @@ export class FaceAnalyzer {
             // GROUP 1: PRESENCE
             // ==========================================
             const faceDetected = true;
-            const faceConfidence = 0.99; // FaceMesh API doesn't expose raw confidence per frame directly, assuming high if detected
+            // MediaPipe Face Mesh does not expose a trustworthy per-frame detection
+            // confidence here. Keep it unavailable instead of fabricating a value.
+            const faceConfidence = null;
             
             // Calculate bounding box
             let minX = 1, minY = 1, maxX = 0, maxY = 0;
@@ -474,8 +481,8 @@ export class FaceAnalyzer {
             
             this.currentMetrics = {
                 faceDetected: false,
-                attentionScore: 0,
-                attentionCategory: 'disengaged',
+                attentionScore: null,
+                attentionCategory: 'unavailable',
                 emotion: 'neutral',
                 awayTimeSeconds: this.awayTimeSeconds,
                 focusedTimeSeconds: this.focusedTimeSeconds,
@@ -489,6 +496,8 @@ export class FaceAnalyzer {
             ctx.font = '24px Arial';
             ctx.fillText("FACE NOT DETECTED", 20, 40);
         }
+
+        ctx.restore();
 
         // Call callback every frame
         if (this.onDataCallback) {
@@ -510,8 +519,9 @@ export function buildPayload(metrics, studentId, studentName, sessionId) {
             timestamp: Date.now(),
             payloadVersion: "1.0",
             faceDetected: false,
-            attentionScore: 0,
-            engagementScore: 0,
+            attentionScore: null,
+            engagementScore: null,
+            signalState: 'unavailable',
             emotion: 'neutral',
             awayTimeSeconds: metrics.awayTimeSeconds || 0,
             focusStreakSeconds: 0,
@@ -528,7 +538,8 @@ export function buildPayload(metrics, studentId, studentName, sessionId) {
         payloadVersion: "1.0",
         
         faceDetected: true,
-        faceConfidence: metrics.faceConfidence || 0.99,
+        faceConfidence: null,
+        signalState: 'observable',
         
         // Key routing stats expected by the server
         attentionScore: metrics.attentionScore,
