@@ -114,7 +114,7 @@ startButton.addEventListener('click', async () => {
     }, { assetBase: globalThis.SESSIONSIGNAL_MEDIAPIPE_ASSET_BASE });
     await analyzer.start();
     setStatus('Camera active · connected', 'active');
-    await telemetry.setStatus('connected');
+    telemetry.setStatus('connected').catch(() => {});
     flushTimer = setInterval(async () => {
       if (flushInFlight) return;
       const aggregate = collector?.flush();
@@ -126,7 +126,8 @@ startButton.addEventListener('click', async () => {
         if (chart.data.labels.length > 60) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
         chart.update('none');
         await telemetry.submit(aggregate);
-      } finally { flushInFlight = false; }
+      } catch { /* network errors are queued inside telemetry.submit; ignore here */ }
+      finally { flushInFlight = false; }
     }, 5000);
   } catch (error) {
     analyzer?.stop();
@@ -148,7 +149,24 @@ document.addEventListener('visibilitychange', () => {
   else setStatus('Camera active · checking connection', 'active');
 });
 window.addEventListener('unhandledrejection', (event) => {
+  // Only treat this as fatal if it originated from a recognized monitoring error.
+  // Supabase realtime, network blips, and background retries all produce benign
+  // unhandled rejections that must NOT crash an active monitoring session.
   if (!analyzer) return;
+  const reason = event.reason;
+  const msg = (reason?.message || String(reason) || '').toLowerCase();
+  // Ignore Supabase realtime/channel lifecycle errors — they self-recover.
+  if (/websocket|channel|realtime|timed? ?out|network|fetch|failed to fetch/i.test(msg)) {
+    event.preventDefault();
+    return;
+  }
+  // Ignore errors thrown from setStatus / set_participant_status — the DB enforces
+  // idempotency and these are non-fatal; telemetry continues regardless.
+  if (/participant|status|session.*ended|not active|42501/i.test(msg)) {
+    event.preventDefault();
+    return;
+  }
+  // Anything else while monitoring is active is treated as fatal.
   event.preventDefault();
   stopMonitoring('stopped', 'Monitoring stopped after an error', 'Your camera has been released. Return to the join screen and try again.');
 });

@@ -41,8 +41,10 @@ export class TelemetryClient {
 
   async subscribe() {
     if (!this.session) return;
-    if (this.channel) await this.client.removeChannel(this.channel);
-    await this.client.realtime.setAuth();
+    if (this.channel) await this.client.removeChannel(this.channel).catch(() => {});
+    // setAuth can fail transiently (token not yet ready, realtime not connected).
+    // Failures here are non-fatal — the channel will re-auth on next SUBSCRIBED event.
+    await this.client.realtime.setAuth().catch(() => {});
     const topic = `sessionsignal:student-session:${this.session.sessionId}:${this.session.userId}`;
     this.channel = this.client.channel(topic, { config: { private: true } })
       .on('broadcast', { event: 'session_ended' }, (event) => this.hooks.onSessionEnded?.(event.payload || event))
@@ -133,7 +135,11 @@ export class TelemetryClient {
 
   async setStatus(status) {
     if (!this.session) return;
-    await this.client.rpc('set_participant_status', { p_participant_id: this.session.participantId, p_status: status });
+    // Swallow DB errors — status updates are best-effort; a failed update must
+    // never crash the monitoring pipeline or trigger unhandledrejection.
+    try {
+      await this.client.rpc('set_participant_status', { p_participant_id: this.session.participantId, p_status: status });
+    } catch { /* non-fatal: session may have already ended on the server */ }
   }
 
   async discardQueuedSession(sessionId = this.session?.sessionId) {
@@ -148,9 +154,9 @@ export class TelemetryClient {
     clearTimeout(this.retryTimer);
     this.retryTimer = null;
     this.retrying = false;
-    if (status) try { await this.setStatus(status); } catch {}
+    if (status) await this.setStatus(status);
     if (discardQueue) await this.discardQueuedSession(sessionId).catch(() => {});
-    if (this.channel) await this.client.removeChannel(this.channel);
+    if (this.channel) await this.client.removeChannel(this.channel).catch(() => {});
     this.channel = null;
     this.session = null;
   }
