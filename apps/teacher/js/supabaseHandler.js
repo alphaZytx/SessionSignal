@@ -102,7 +102,7 @@ export class SupabaseHandler {
     this.participants.clear();
     this.seenSnapshots.clear();
 
-    await this.client.realtime.setAuth();
+    await this.client.realtime.setAuth().catch(() => {});
     this.channel = this.client
       .channel(`sessionsignal:teacher-session:${session.id}`, { config: { private: true } })
       .on('broadcast', { event: 'snapshot_inserted' }, (message) => this._receive('snapshot', broadcastRecord(message)))
@@ -359,7 +359,7 @@ export class SupabaseHandler {
 
   async _removeChannel() {
     clearInterval(this.refreshTimer);
-    if (this.channel) await this.client.removeChannel(this.channel);
+    if (this.channel) await this.client.removeChannel(this.channel).catch(() => {});
     this.channel = null;
   }
 

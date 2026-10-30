@@ -180,7 +180,7 @@ function buildHeatmap() {
         container.appendChild(studentLabel);
         
         // Map snaps to columns
-        const snaps = allStudentSnaps[stu.studentId];
+        const snaps = allStudentSnaps[stu.studentId] || [];
         const colMap = new Array(NUM_COLS).fill(null);
         
         snaps.forEach(snap => {
@@ -736,7 +736,7 @@ function populateStudentTab(studentId) {
                 <td>${unavailable ? '—' : Math.round(sn.blink_rate || 0)}</td>
                 <td>${unavailable ? '—' : (sn.drowsiness_score || 0).toFixed(2)}</td>
                 <td>${unavailable ? '—' : `${Math.round((sn.eye_openness_mean || 0) * 100)}%`}</td>
-                <td style="color:var(--color-red)">${sn.alert_flags ? sn.alert_flags.split(',').length : 0}</td>
+                <td style="color:var(--color-red)">${sn.alert_flags ? sn.alert_flags.split(',').filter(Boolean).length : 0}</td>
             </tr>
         `;
         tb.insertAdjacentHTML('beforeend', tr);

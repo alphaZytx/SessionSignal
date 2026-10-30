@@ -35,7 +35,7 @@ export class StudentGrid {
     addStudent(studentId, name, color) {
         if (this.students.has(studentId)) return;
 
-        const initials = this._escapeHtml(this.getInitials(name));
+        const initials = this._escapeHtml(this._getInitials(name));
         const safeName = this._escapeHtml(name);
         
         // 1. Create Sidebar Card HTML
