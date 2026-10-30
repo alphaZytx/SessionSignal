@@ -4,6 +4,9 @@ export class FaceAnalyzer {
         this.canvasElement = canvasElement;
         this.canvasCtx = canvasElement.getContext('2d');
         this.onDataCallback = onDataCallback;
+        this.options = options;
+        this.stopped = false;
+        this.onCameraEnded = options.onCameraEnded;
 
         // Initialize MediaPipe FaceMesh
         const assetBase = options.assetBase || globalThis.SESSIONSIGNAL_MEDIAPIPE_ASSET_BASE || 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/';
@@ -49,11 +52,20 @@ export class FaceAnalyzer {
     }
 
     async start() {
+        this.stopped = false;
         // Initialize Camera using Camera Utils
         // Requires: <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
         this.camera = new Camera(this.videoElement, {
             onFrame: async () => {
-                await this.faceMesh.send({ image: this.videoElement });
+                if (this.stopped) return;
+                // Avoid feeding incomplete frames or zero-dimension video to MediaPipe
+                if (!this.videoElement || this.videoElement.readyState < 2 || !this.videoElement.videoWidth) return;
+                try {
+                    await this.faceMesh.send({ image: this.videoElement });
+                } catch (error) {
+                    // Non-fatal: dropped or unready frames must not break the monitoring pipeline
+                    console.warn('[FaceAnalyzer] Frame processing skipped:', error?.message || error);
+                }
             },
             width: 640,
             height: 480
@@ -61,16 +73,33 @@ export class FaceAnalyzer {
         
         // Start the camera
         await this.camera.start();
+
+        const stream = this.videoElement?.srcObject;
+        if (stream && stream.getVideoTracks) {
+            const track = stream.getVideoTracks()[0];
+            if (track) {
+                track.addEventListener('ended', () => {
+                    if (!this.stopped) {
+                        this.stop();
+                        this.onCameraEnded?.();
+                    }
+                });
+            }
+        }
+
         this.sessionStartTime = Date.now();
         this.lastFrameTime = Date.now();
     }
 
     stop() {
+        this.stopped = true;
         if (this.camera) {
-            this.camera.stop();
+            try { this.camera.stop(); } catch {}
         }
         const stream = this.videoElement?.srcObject;
-        if (stream?.getTracks) stream.getTracks().forEach(track => track.stop());
+        if (stream?.getTracks) stream.getTracks().forEach(track => {
+            try { track.stop(); } catch {}
+        });
         if (this.videoElement) this.videoElement.srcObject = null;
         this.currentMetrics = { faceDetected: false, attentionScore: null, attentionCategory: 'unavailable' };
     }

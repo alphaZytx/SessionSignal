@@ -48,3 +48,42 @@ test('failed queue flush preserves packets and signals retry', async () => {
   await assert.rejects(() => telemetry.flushQueue(), /network unavailable/);
   assert.deepEqual(values['sessionsignal.numericTelemetryQueue'].map(item => item.snapshotId), ['one', 'two']);
 });
+
+test('face analyzer handles dropped or failed frames without throwing unhandled exceptions', async () => {
+  const { FaceMesh: originalFaceMesh, Camera: originalCamera } = globalThis;
+  let cameraStopped = false;
+  globalThis.FaceMesh = class {
+    setOptions() {}
+    onResults() {}
+    async send() { throw new Error('frame dropped'); }
+  };
+  globalThis.Camera = class {
+    constructor(_video, options) { this.options = options; }
+    async start() {
+      // Simulate frame delivery
+      await this.options.onFrame();
+    }
+    stop() { cameraStopped = true; }
+  };
+
+  const video = { srcObject: null, readyState: 4, videoWidth: 640 };
+  const analyzer = new (await import('../apps/student/js/faceAnalyzer.js')).FaceAnalyzer(
+    video,
+    { getContext: () => ({}) },
+    () => {}
+  );
+
+  // Calling start() with a failing frame should not reject or throw
+  await assert.doesNotReject(async () => {
+    await analyzer.start();
+  });
+  assert.equal(analyzer.stopped, false);
+  analyzer.stop();
+  assert.equal(analyzer.stopped, true);
+  assert.equal(cameraStopped, true);
+
+  if (originalFaceMesh === undefined) delete globalThis.FaceMesh;
+  else globalThis.FaceMesh = originalFaceMesh;
+  if (originalCamera === undefined) delete globalThis.Camera;
+  else globalThis.Camera = originalCamera;
+});

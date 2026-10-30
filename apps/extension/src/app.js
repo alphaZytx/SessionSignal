@@ -111,7 +111,12 @@ startButton.addEventListener('click', async () => {
     analyzer = new FaceAnalyzer(document.getElementById('videoElement'), document.getElementById('overlayCanvas'), (metrics) => {
       collector.addFrame(metrics);
       updateMetrics(metrics);
-    }, { assetBase: globalThis.SESSIONSIGNAL_MEDIAPIPE_ASSET_BASE });
+    }, {
+      assetBase: globalThis.SESSIONSIGNAL_MEDIAPIPE_ASSET_BASE,
+      onCameraEnded: () => {
+        stopMonitoring('stopped', 'Camera disconnected', 'The camera device was disconnected or permission was revoked.');
+      }
+    });
     await analyzer.start();
     setStatus('Camera active · connected', 'active');
     telemetry.setStatus('connected').catch(() => {});
@@ -149,26 +154,10 @@ document.addEventListener('visibilitychange', () => {
   else setStatus('Camera active · checking connection', 'active');
 });
 window.addEventListener('unhandledrejection', (event) => {
-  // Only treat this as fatal if it originated from a recognized monitoring error.
-  // Supabase realtime, network blips, and background retries all produce benign
-  // unhandled rejections that must NOT crash an active monitoring session.
-  if (!analyzer) return;
-  const reason = event.reason;
-  const msg = (reason?.message || String(reason) || '').toLowerCase();
-  // Ignore Supabase realtime/channel lifecycle errors — they self-recover.
-  if (/websocket|channel|realtime|timed? ?out|network|fetch|failed to fetch/i.test(msg)) {
-    event.preventDefault();
-    return;
-  }
-  // Ignore errors thrown from setStatus / set_participant_status — the DB enforces
-  // idempotency and these are non-fatal; telemetry continues regardless.
-  if (/participant|status|session.*ended|not active|42501/i.test(msg)) {
-    event.preventDefault();
-    return;
-  }
-  // Anything else while monitoring is active is treated as fatal.
+  // Prevent unhandled promise rejections (e.g. transient network timeouts, realtime reconnects,
+  // or background retries) from stopping an active camera monitoring session.
+  console.warn('[SessionSignal] Unhandled promise rejection handled safely:', event.reason);
   event.preventDefault();
-  stopMonitoring('stopped', 'Monitoring stopped after an error', 'Your camera has been released. Return to the join screen and try again.');
 });
 
 setStatus('Not monitoring', 'idle');
