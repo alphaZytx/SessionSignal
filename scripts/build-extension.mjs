@@ -41,7 +41,21 @@ const mediaFiles = [
   'face_mesh_solution_wasm_bin.js', 'face_mesh_solution_wasm_bin.wasm'
 ];
 for (const file of mediaFiles) {
-  await cp(resolve(root, 'node_modules/@mediapipe/face_mesh', file), resolve(output, 'vendor/mediapipe', file));
+  if (file === 'face_mesh.js') {
+    let code = await readFile(resolve(root, 'node_modules/@mediapipe/face_mesh', file), 'utf8');
+    code = code
+      .replace(
+        'if(!a.startsWith("chrome-extension:"))b.setAttribute("crossorigin","anonymous");',
+        'b.setAttribute("crossorigin","anonymous");'
+      )
+      .replace(
+        'b.setAttribute("crossorigin","anonymous");',
+        'if(!a.startsWith("chrome-extension:")&&location.protocol!=="chrome-extension:")b.setAttribute("crossorigin","anonymous");'
+      );
+    await writeFile(resolve(output, 'vendor/mediapipe', file), code, 'utf8');
+  } else {
+    await cp(resolve(root, 'node_modules/@mediapipe/face_mesh', file), resolve(output, 'vendor/mediapipe', file));
+  }
 }
 await cp(resolve(root, 'node_modules/@mediapipe/camera_utils/camera_utils.js'), resolve(output, 'vendor/mediapipe/camera_utils.js'));
 

@@ -53,6 +53,7 @@ test('face analyzer handles dropped or failed frames without throwing unhandled 
   const { FaceMesh: originalFaceMesh, Camera: originalCamera } = globalThis;
   let cameraStopped = false;
   globalThis.FaceMesh = class {
+    async initialize() {}
     setOptions() {}
     onResults() {}
     async send() { throw new Error('frame dropped'); }

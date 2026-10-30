@@ -20,6 +20,11 @@ test('extension executes only packaged scripts', async () => {
   assert.match(html, /vendor\/supabase\/supabase\.js/);
 });
 
+test('extension mediapipe bundle bypasses crossorigin on extension origins', async () => {
+  const code = await readFile(new URL('../dist/extension/vendor/mediapipe/face_mesh.js', import.meta.url), 'utf8');
+  assert.match(code, /chrome-extension:/);
+});
+
 test('beta archive presents one clearly named folder to students', async () => {
   const packager = await readFile(new URL('../scripts/package-extension.mjs', import.meta.url), 'utf8');
   assert.match(packager, /const archiveRoot = `SessionSignal Beta \$\{manifest\.version\}`/);

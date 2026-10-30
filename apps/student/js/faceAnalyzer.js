@@ -53,6 +53,9 @@ export class FaceAnalyzer {
 
     async start() {
         this.stopped = false;
+        if (this.faceMesh?.initialize) {
+            await this.faceMesh.initialize();
+        }
         // Initialize Camera using Camera Utils
         // Requires: <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
         this.camera = new Camera(this.videoElement, {
