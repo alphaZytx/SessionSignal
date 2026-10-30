@@ -1,5 +1,9 @@
 # SessionSignal
 
+[![Verify SessionSignal](https://github.com/alphaZytx/SessionSignal/actions/workflows/ci.yml/badge.svg)](https://github.com/alphaZytx/SessionSignal/actions/workflows/ci.yml)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FalphaZytx%2FSessionSignal&env=VITE_SUPABASE_URL,VITE_SUPABASE_PUBLISHABLE_KEY,EXTENSION_SUPABASE_URL,EXTENSION_SUPABASE_PUBLISHABLE_KEY&project-name=sessionsignal&repository-name=SessionSignal)
+
 SessionSignal is a local-first participation-indicator companion for live classes, workshops, training, coaching, and other online sessions. Facilitators use an authenticated web portal; participants use a Chrome Manifest V3 extension beside Google Meet, Zoom, Teams, or another session website.
 
 Webcam frames are processed locally in the active extension document. SessionSignal sends only derived five-second numerical telemetry, identifiers, timestamps, status, and the participant's chosen display name. It does not upload raw frames, images, video, screenshots, face crops, embeddings, or audio.
@@ -158,6 +162,8 @@ Configure preview and production values separately. Do not configure a secret ke
 
 This repository has not been deployed from this environment; deployment requires the project owner's Supabase and Vercel access.
 
+For the shortest owner-only checklist, follow [`docs/GO_LIVE.md`](docs/GO_LIVE.md). Production builds validate that the website and extension use the same real Supabase project and reject placeholders, mismatched keys, or server secrets. After deployment, run `npm run smoke:live -- https://YOUR_DEPLOYMENT.vercel.app`.
+
 ## Legacy local server
 
 The old server is intentionally retained until Supabase data import and representative reports are verified:
@@ -175,4 +181,5 @@ It is not part of the production build or normal MVP architecture. Its unauthent
 - `docs/MANUAL_TEST_PLAN.md` — required browser, privacy, RLS, and cross-location validation
 - `docs/MIGRATION_VERIFICATION.md` — SQLite counts, import, and report comparison
 - `docs/CLEANUP_REPORT.md` — retired and intentionally retained legacy files
+- `docs/GO_LIVE.md` — minimum owner actions for final Supabase and Vercel deployment
 - `about_this_project.md` — current architecture and future-change handoff
