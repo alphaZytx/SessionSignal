@@ -62,7 +62,7 @@ Record the result in `docs/MANUAL_TEST_PLAN.md`. Real-camera, deployed RLS, and 
 
 ## 5. Before a larger or institutional rollout
 
-- Choose and document a retention period; schedule `public.delete_expired_sessionsignal_data()` accordingly.
+- The default 180-day telemetry retention policy is enforced daily at 02:15 UTC by the `sessionsignal-daily-retention-cleanup` Supabase Cron job. Monitor its first run in **Integrations → Cron** and change the policy only through a reviewed migration.
 - Configure backups and usage/budget alerts.
 - Publish the real support contact and privacy/controller details.
 - Obtain organizational consent and legal/privacy review appropriate to participants, region, disability/accessibility needs, and age group.

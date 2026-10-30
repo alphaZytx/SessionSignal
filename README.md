@@ -73,7 +73,7 @@ Facilitator routes redirect to `/facilitators/login` unless Supabase Auth has a 
 6. Disable public Realtime channels if the project is dedicated to SessionSignal; SessionSignal subscriptions are private.
 7. Create the teacher Auth user through a trusted dashboard/admin process and provision the matching profile using `scripts/provision-teacher.sql`.
 8. Verify RLS and private-topic access with separate teacher A, teacher B, anonymous student, and unauthenticated clients.
-9. Schedule `public.delete_expired_sessionsignal_data()` only after confirming the retention policy. New sessions default to a 180-day retention date.
+9. Verify the daily `sessionsignal-daily-retention-cleanup` Supabase Cron run. New sessions default to a 180-day retention date.
 
 Detailed owner steps are in `docs/SUPABASE_SETUP.md`. Never expose `sb_secret_...` or a legacy service-role key in browser code, extension files, Vercel public variables, or Git.
 

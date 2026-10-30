@@ -1,3 +1,10 @@
+import { existsSync } from 'node:fs';
+import { loadEnvFile } from 'node:process';
+
+if (existsSync('.env.local')) {
+  loadEnvFile('.env.local');
+}
+
 const required = [
   'VITE_SUPABASE_URL',
   'VITE_SUPABASE_PUBLISHABLE_KEY',

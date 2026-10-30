@@ -42,7 +42,7 @@ For a dedicated project, disable public channels in Realtime settings. Confirm a
 
 ## 6. Retention
 
-New sessions receive `retention_until = now() + 180 days`. The migration provides owner-only `public.delete_expired_sessionsignal_data()`, but does not schedule it automatically. Confirm the institutional policy, then schedule it using a trusted database scheduler. Record and test deletion behavior before real student use.
+New sessions receive `retention_until = now() + 180 days`. The managed migration schedules owner-only `public.delete_expired_sessionsignal_data()` daily at 02:15 UTC through Supabase Cron. Monitor the first completed run in **Integrations → Cron**; change the schedule or retention policy only through a reviewed migration.
 
 ## 7. Required RLS verification
 

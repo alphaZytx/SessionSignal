@@ -1,1 +1,40 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy — SessionSignal</title><link rel="stylesheet" href="/apps/web/src/styles/site.css"></head><body><div data-site-header></div><main id="main-content"><header class="page-hero"><span class="eyebrow">Privacy and data handling</span><h1>A plain-language account of what SessionSignal does.</h1><p class="page-lead">This statement describes the implemented beta architecture. It is not a claim of legal certification or universal suitability.</p></header><section class="section"><article class="section-inner prose"><h2>Camera processing</h2><p>SessionSignal asks for camera access only after a participant joins a valid active session, reviews the notice, and clicks Start Monitoring. Camera frames are processed in memory inside the active Chrome extension page.</p><p>SessionSignal does not upload, stream, store, or log raw webcam frames, video, screenshots, canvas images, face crops, face embeddings, or audio. It does not request microphone access.</p><h2>What is sent</h2><p>Approximately every five seconds, the extension may send the participant's display name and session association, identifiers, timestamps, connection status, payload version, idempotency identifier, and derived numerical summaries such as an attention estimate, gaze percentage, head-pose values, eye openness, blink rate, drowsiness heuristic, rule-based state label, and alert flags.</p><h2>Who can read it</h2><p>Supabase authentication and Row Level Security are designed so the owning facilitator can read their own sessions, participants, and snapshots. A pseudonymous participant identity can join through a restricted function and submit only for its own participant record while that session is active. Participants cannot browse session tables or other participants' snapshots.</p><h2>Retention</h2><p>New sessions default to a 180-day retention date in the database schema. Automatic deletion must be explicitly scheduled by the project owner before real deployment. Until that task is configured and verified, deletion remains a manual operational responsibility.</p><h2>Identity</h2><p>Facilitators use provisioned accounts. Participants use a pseudonymous anonymous Supabase identity tied to the extension/browser profile. A display name is not verified identity and may be lost when extension data is cleared or removed.</p><h2>Limits of the indicators</h2><p>Camera-based attention estimates and rule-based state labels are heuristics. They can be affected by lighting, camera position, disability, assistive technology, movement, device quality, and ordinary behavior. They must not be the sole basis for grades, discipline, attendance penalties, employment decisions, or other high-stakes outcomes.</p><h2>Stopping</h2><p>Participants can stop monitoring at any time. Closing the active Side Panel or extension tab stops that document's camera and processing. Ending the live session marks it ended and the database rejects later snapshots.</p><h2>Contact</h2><p>Use the <a href="/contact">contact page</a> for the support detail configured by the project owner.</p></article></section></main><div data-site-footer></div><script type="module" src="/apps/web/src/marketing/site.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Privacy — SessionSignal</title>
+  <link rel="stylesheet" href="/apps/web/src/styles/site.css">
+</head>
+<body>
+  <div data-site-header></div>
+  <main id="main-content">
+    <header class="page-hero">
+      <span class="eyebrow">Privacy and data handling</span>
+      <h1>A plain-language account of what SessionSignal does.</h1>
+      <p class="page-lead">This statement describes the implemented beta architecture. It is not a claim of legal certification or universal suitability.</p>
+    </header>
+    <section class="section"><article class="section-inner prose">
+      <h2>Camera processing</h2>
+      <p>SessionSignal asks for camera access only after a participant joins a valid active session, reviews the notice, and clicks Start Monitoring. Camera frames are processed in memory inside the active Chrome extension page.</p>
+      <p>SessionSignal does not upload, stream, store, or log raw webcam frames, video, screenshots, canvas images, face crops, face embeddings, or audio. It does not request microphone access.</p>
+      <h2>What is sent</h2>
+      <p>Approximately every five seconds, the extension may send the participant's display name and session association, identifiers, timestamps, connection status, payload version, idempotency identifier, and derived numerical summaries such as an attention estimate, gaze percentage, head-pose values, eye openness, blink rate, drowsiness heuristic, rule-based state label, and alert flags.</p>
+      <h2>Who can read it</h2>
+      <p>Supabase authentication and Row Level Security are designed so the owning facilitator can read their own sessions, participants, and snapshots. A pseudonymous participant identity can join through a restricted function and submit only for its own participant record while that session is active. Participants cannot browse session tables or other participants' snapshots.</p>
+      <h2>Retention</h2>
+      <p>New sessions default to a 180-day retention date. A Supabase Cron job runs daily at 02:15 UTC to delete expired telemetry. The project owner should monitor the job and change this policy only through a reviewed database migration.</p>
+      <h2>Identity</h2>
+      <p>Facilitators use provisioned accounts. Participants use a pseudonymous anonymous Supabase identity tied to the extension/browser profile. A display name is not verified identity and may be lost when extension data is cleared or removed.</p>
+      <h2>Limits of the indicators</h2>
+      <p>Camera-based attention estimates and rule-based state labels are heuristics. They can be affected by lighting, camera position, disability, assistive technology, movement, device quality, and ordinary behavior. They must not be the sole basis for grades, discipline, attendance penalties, employment decisions, or other high-stakes outcomes.</p>
+      <h2>Stopping</h2>
+      <p>Participants can stop monitoring at any time. Closing the active Side Panel or extension tab stops that document's camera and processing. Ending the live session marks it ended and the database rejects later snapshots.</p>
+      <h2>Contact</h2>
+      <p>Use the <a href="/contact">contact page</a> for the support detail configured by the project owner.</p>
+    </article></section>
+  </main>
+  <div data-site-footer></div>
+  <script type="module" src="/apps/web/src/marketing/site.js"></script>
+</body>
+</html>

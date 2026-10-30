@@ -393,5 +393,5 @@ Do not delete the SQLite source, its consistent backup, or the legacy report pat
 - Browser/OS camera sharing with Meet or Zoom varies by device and must be tested.
 - Side Panel programmatic opening requires a supported Chrome version and user gesture.
 - The controlled beta package is not a Chrome Web Store release.
-- CAPTCHA, remote RLS verification, deployment, retention scheduling, and production monitoring require owner configuration.
+- CAPTCHA, remote RLS verification, final website deployment, and production monitoring require owner configuration. The default 180-day telemetry retention cleanup is scheduled daily in Supabase Cron.
 - The retained legacy server is unauthenticated and unsuitable for production.
