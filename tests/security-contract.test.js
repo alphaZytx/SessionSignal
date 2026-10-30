@@ -36,6 +36,12 @@ test('database migration enables RLS and validates ownership through RPCs', asyn
   assert.doesNotMatch(sql, /service_role/i);
 });
 
+test('student join migration uses an unambiguous participant conflict target', async () => {
+  const sql = await read('supabase/migrations/202610310003_fix_join_conflict_target.sql');
+  assert.match(sql, /on conflict on constraint session_participants_session_id_auth_user_id_key/i);
+  assert.doesNotMatch(sql, /on conflict \(session_id, auth_user_id\)/i);
+});
+
 test('production client source does not contain a Supabase secret key', async () => {
   const files = ['apps/web/src/lib/supabaseClient.js', 'apps/extension/src/telemetryClient.js', 'apps/extension/manifest.json'];
   for (const file of files) assert.doesNotMatch(await read(file), /sb_secret_[A-Za-z0-9_-]+/);
