@@ -1,8 +1,8 @@
 {
   "buildCommand": "npm run build:production",
-  "framework": "vite",
+  "framework": null,
   "outputDirectory": "dist/web",
-  "cleanUrls": true,
+  "cleanUrls": false,
   "redirects": [
     { "source": "/teachers", "destination": "/facilitators", "permanent": true },
     { "source": "/teachers/login", "destination": "/facilitators/login", "permanent": true },
