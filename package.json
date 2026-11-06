@@ -35,8 +35,8 @@
     "chartjs-plugin-datalabels": "^2.2.0"
   },
   "devDependencies": {
-    "archiver": "^7.0.1",
-    "better-sqlite3": "^12.11.1",
-    "vite": "^7.3.7"
+    "archiver": "^8.0.0",
+    "better-sqlite3": "^13.0.3",
+    "vite": "^8.3.5"
   }
 }
